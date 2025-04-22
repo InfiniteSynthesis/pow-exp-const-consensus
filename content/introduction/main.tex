@@ -1,0 +1,33 @@
+\section{Introduction}
+\label{sec:introduction}
+
+Byzantine agreement (BA, aka consensus) is a classical problem introduced in~\cite{JACM:PeaShoLam80} that asks $n$ parties to agree on a message so that three properties are satisfied: (i) termination, (ii) agreement and (iii) validity, in a setting where any $t$ of the parties may behave maliciously.
+%
+Validity enforces the non-triviality of solutions, as it requires that if the non-faulty/``honest'' parties start the execution with the same value, then that should be the output value.
+
+BA has been classically considered in a ``permissioned setting'': the parties running the protocol are setup so they are able to reliably and directly communicate with each other, or have access to a public-key directory that reliably lists all their public keys.
+%
+This is captured by a suitable network or \emph{trusted setup} assumption.
+%
+The ``permissionless setting,'' on the other hand, was introduced with the development of the Bitcoin blockchain \cite{Nak08}, and refers to an environment where parties may enter the protocol execution at will, the communication infrastructure is assumed to deliver messages without reliably identifying their origin, and the trusted setup is reduced to the existence of an unpredictable public string---the ``genesis block'' (which sometimes for simplicity we will just refer to as a CRS [common reference string], or ``public-state setup''~\cite{RSA:GarKia20}).
+
+BA in the permissionless setting above using proofs of work (PoW)\footnote{As implemented in the Bitcoin  blockchain, via hash functions modeled as a \emph{random oracle} (RO)~\cite{CCS:BelRog93}.} was first (formally) studied in~\cite{EC:GarKiaLeo15}.
+%
+In terms of running time, the protocols presented in \cite{EC:GarKiaLeo15} run in $\bigO(\polylog \kappa)$ rounds, where $\kappa$ is the security parameter and address the binary input case, where the parties wish to agree on a single bit.
+%
+Subsequent work improved on various aspects at the expense of stronger assumptions.
+%
+For example, Andrychowicz and Dziembowski~\cite{C:AndDzi15} offered a multi-valued BA protocol also based on PoWs (RO) but with no trusted setup, assuming in addition the existence of existentially unforgeable signatures, and with a running time proportional to the number of parties.
+%
+The latter was in turn improved by Garay \textit{et al.} \cite{PKC:GKLP18} to $\bigO(\polylog \kappa)$ rounds, and just assuming PoWs and no trusted setup.
+%
+Recently, an expected-constant-round BA protocol was introduced by Das \textit{et al.}~\cite{EPRINT:DEFLM22}, by requiring in addition to the Andrychowicz and Dziembowski~\cite{C:AndDzi15} assumptions the existence of \emph{verifiable delay functions} (VDFs)~\cite{C:BBBF18}.
+%
+Refer to~\cref{table:PoW-BA} for a comparison of existing PoW-based (or ``PoW-inspired'') BA protocols.
+
+\input{tables/round-complexity}
+
+Given the above state of the art, in this work we focus on the question of solving permissionless BA in the original PoW-based blockchain model of Bitcoin with expected-constant round complexity.
+
+\input{content/introduction/our-results}
+\input{content/introduction/related-work}

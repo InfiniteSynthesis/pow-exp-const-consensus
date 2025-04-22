@@ -1,0 +1,35 @@
+\begin{table*}[ht]
+    \begin{tabularx}{\linewidth}{@{\hskip .25in} c @{\hskip .5in}  c @{\hskip .5in} c @{\hskip .25in}}
+        \toprule
+        \textbf{Protocol}
+         & \textbf{Setup \& assumptions }
+         & \textbf{Round complexity}
+        \\ \midrule
+        \cite{C:AndDzi15}
+         & RO + SIG
+         & $\bigO(n)$
+        \\ \midrule
+        \cite{EC:GarKiaLeo15}
+         & CRS + RO
+         & $\bigO(\polylog \kappa)$
+        \\ \midrule
+        \cite{PKC:GKLP18}
+         & RO
+         & $\bigO(\polylog \kappa)$
+        \\ \midrule
+        \cite{EPRINT:EckFauLos17}
+         & RO + SIG + TLP
+         & Expected $\bigO(1)$
+        \\ \midrule
+        \cite{EPRINT:DEFLM22}
+         & RO + SIG + VDF
+         & Expected $\bigO(1)$
+        \\ \midrule
+        This paper
+         & CRS + RO
+         & Expected $\bigO(1)$
+        \\ \bottomrule
+        \caption{\sl Round complexity of PoW-based (or PoW-inspired) permissionless Byzantine agreement protocols, with their corresponding setup and cryptographic assumptions.}
+        \label{table:PoW-BA}
+    \end{tabularx}
+\end{table*}

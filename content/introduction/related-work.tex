@@ -1,0 +1,72 @@
+\subsection{Related Work}
+\label{subsec:related-work}
+
+\paragraph{Round complexity of synchronous BA protocols.}
+%
+For ``classical'' BA protocols with deterministic termination, it is known that $t + 1$ rounds \cite{InfProcessLett:FisLyn82} are necessary, where $t$ denotes the upper bound on the number of corrupted parties, and matching upper bounds exist, both in the information-theoretic and cryptographic settings~\cite{TOPLAS:LamShoPea82,SICOMP:DolStr83,STOC:GarMos93}.
+
+The linear dependency of the number of rounds on the number of corrupted parties can be circumvented by introducing randomization.
+%
+Rabin \cite{FOCS:Rabin83} showed that consensus reduces to an ``oblivious common coin'' (OCC)---i.e., a common view of the honest parties of some public randomness.
+%
+As a result, randomized protocols with linear corruption resiliency and probabilistic termination in expected-constant rounds is possible.
+%
+Later on, Feldman and Micali \cite{STOC:FelMic88} showed how to construct an OCC ``from scratch'' and gave the first expected-constant-time Byzantine agreement protocol, tolerating the optimal number of corrupted parties (less than $1/3$ of the total number of parties), in the information-theoretic setting.
+%
+In the setting where trusted private setup (i.e., a PKI) is provided, Katz and Koo \cite{C:KatKoo06}  presented an expected-constant-round BA protocol with optimal resiliency (less than $1/2$ in the cryptographic setting).
+
+We already mentioned that with the advent of blockchains, BA protocols that do not rely on a fixed set of participants became possible.
+%
+For PoW-based BA protocols, please refer to the beginning of this section.
+%
+Regarding Proof-of-Stake protocols, Algorand \cite{TCS:CheMic19} uses \emph{verifiable random functions} (VRFs) to self-elect parties, and agreement and validity are achieved in expected-constant time.
+
+Regarding BA protocols based on some other assumptions, we note that in an unpublished manuscript (also mentioned in the introduction)~\cite{EPRINT:EckFauLos17}, Eckey, Faust and Loss design an expected-constant-round BA protocol based on PoWs and time-lock puzzles (TLPs).
+%
+Further, Das \textit{et al.} \cite{EPRINT:DEFLM22} propose a BA protocol based on the much stronger primitive of \emph{verifiable delay functions} (VDFs) that also terminate in expected-constant time.
+
+\paragraph{Many PoWs from one PoW.}
+%
+As mentioned in the introduction, Garay, Kiayias and Leonardos \cite{EC:GarKiaLeo15} showed how to use a Nakamoto-style blockchain to solve BA.
+%
+Achieving the optimal corruption threshold of less than $1/2$ of the participants, however, presented some challenges, which were resolved by the introduction of a technique called ``\twoforone PoW,'' which is used to compose two modes of mining, one for blocks and one for inputs.
+%
+In a nutshell, in \twoforone PoW, a random oracle output is checked twice with respect to \emph{both} its leading zeros and tailing zeros.
+%
+Sufficient leading zeros implies the success of mining a block, and that's the original---i.e., Bitcoin's---approach to assess and verify whether a PoW has been produced, while sufficient \emph{trailing} zeros imply the success of mining an input.
+%
+This scheme guarantees that both mining procedures can be safely composed and the adversary is bound to its original computational power and is not able to favor one PoW operation over the other.
+
+The \twoforone PoW primitive has found applications in many other scenarios (e.g.,~\cite{PODC:PasShi17}) and its generalization---\mforone PoW---makes parallel chains possible and has been used to improve transaction throughput \cite{CCS:BKTFV19} and for accelerating transaction confirmation \cite{TCC:FGKR20}.
+%
+We note that, in the case of parallel chains existing \mforone PoW constructions cannot achieve full independence on all parallel chains.
+%
+We elaborate on this in~\cref{sec:related-work-contd}.
+
+\paragraph{Non-simultaneous termination and sequential composition.}
+%
+A consequence of the round complexity ``acceleration'' provided by randomized BA protocols is that their termination is probabilistic and not necessarily simultaneous \cite{JACM:DolReiStr90}.
+%
+This is problematic when this type of BA protocol is invoked by a higher-level protocol.
+%
+More specifically, parties would not be able to figure out when to safely return to the higher-level protocol and start the next execution.
+%
+One solution is to run randomized BA protocols for $\bigO(\polylog \kappa)$ rounds where $\kappa$ is the security parameter.
+%
+The running time is still independent of the number of parties, and, with overwhelming probability, parties would terminate and be able to start the next execution when $\bigO(\polylog \kappa)$ rounds have elapsed.
+%
+A more sophisticated sequential composition approach is to employ so-called ``Bracha termination'' and ``super-round'' expansion in order to preserve an expected-constant round complexity (cf.~\cite{C:CCGZ16}).
+%
+We adapt these techniques to the permissionless setting.
+
+\paragraph{Settlement latency in state machine replication.}
+%
+Most PoW-based SMR protocols achieve liveness in a time which is a function of the security parameter, hence suffering from long transaction settlement latency.
+%
+The ``Ledger Combiner'' approach \cite{TCC:FGKR20} proposes a novel grade assignment function to build a virtual ledger on top of different parallel ledgers, achieving constant settlement time but only for \emph{non-conflicting} transactions.
+%
+Prism \cite{CCS:BKTFV19} also gives a PoW-based parallel chain protocol with expected-constant settlement time, but only for non-conflicting transactions.
+%
+Other approaches to fast transaction settlement include Algorand's~\cite{TCS:CheMic19}, which being Proof-of-Stake-based, achieves expected-constant settlement delay for all types of transactions.
+%
+Finally, Momose and Ren \cite{CCS:MomRen22} achieve expected-constant confirmation delay, assuming a PKI and VRFs.

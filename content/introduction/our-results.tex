@@ -1,0 +1,66 @@
+\subsection{Overview of Our Results}
+\label{subec:overview-of-our-results}
+
+We present a new permissionless PoW-based multi-valued BA protocol that has expected-constant round complexity and demonstrate how it can be used to solve permissionless \emph{state machine replication} (SMR, or, equivalently, a \emph{distributed ledger})~\cite{CSUR:Schneider90} with fast settlement.
+%
+In more detail, our results are as follows.
+
+\smallskip\noindent\emph{A new PoW-based permissionless consensus protocol.}
+%
+We put forth \emph{Chain-King Consensus}---the first PoW-based permissionless consensus protocol that achieves agreement and validity in \emph{expected-constant} time.
+%
+Our construction is based on mining on parallel chains, and ``emulating'' a classical ``phase-king'' consensus protocol~\cite{FOCS:BerGarPer89} with a randomized chain (the ``chain-king'') selection rule on top of the parallel chains construction.
+%
+Our protocol is based on the following ideas.
+
+First, we revisit the parallel chain technique (cf.~\cite{EPRINT:FGKR18,CCS:BKTFV19,TCC:FGKR20}) as a method for combining multiple blockchains advancing in parallel.
+%
+Our key observation is that running $m = \polylog(\kappa)$ parallel chains is sufficient to maintain independence via an \mforone\footnote{Pronounced ``$m$-for-$1$.''} PoW technique~\cite{EC:GarKiaLeo15} (while prior work set $m = \Theta(\kappa)$ and hence at best was only able to argue ``sub-independence''; see \cite{TCC:FGKR20}).
+%
+In fact, our protocol runs $m$ independent instances of \twoforone PoWs, with the latter component being responsible for transaction processing.\footnote{As in~\cite{EC:GarKiaLeo15}, the ``transactions'' being processed in a BA protocol are the input values being proposed by the parties.}
+%
+The key property we utilize is that in a constant number of rounds, a fraction of the $m$ parallel chains will be sufficiently advanced to offer a form of ``common prefix'' property (cf.~\cite{EC:GarKiaLeo15}) with a constant probability of success.
+
+Second, and contrary to prior work on parallel chains, we ``slice'' the chain progression into stages where parallel chains can cross-reference each other.
+%
+In the first stage, parties converge on their views and ensure fresh randomness is introduced; in the second stage they process transactions; and in the third, they prepare for the cross referencing by the upcoming stage, after which the stages rotate indefinitely.
+%
+A key property of our cross-referencing rule is the concept of a \emph{dense chain}---a strengthening of the concepts of ``chain growth'' and ``chain quality''~\cite{EC:GarKiaLeo15}.
+%
+Given the short length of each stage (a constant number of rounds), chain density ensures that the adversary faces difficulties to create multiple compromised chains.
+%
+The key conclusion of this chain structure is \emph{phase-oblivious agreement}, which refers to the fact that, on a large fraction of chains, the majority of input values are contributed by honest parties.
+
+The core agreement component of our protocol follows the ``phase king'' approach (cf.~\cite{ALP:BerGar89,FOCS:BerGarPer89}).
+%
+The key idea of porting this protocol design technique to the permissionless setting is to map the chains in the parallel chains cluster to the roles of the different parties in the classical protocol.
+%
+As a result, the king itself is one of the chains.
+%
+Moreover, due to the ``dilution'' of adversarial power that occurs in the parallel chains setting, we can set the king \emph{deterministically} to be a specific chain.
+%
+This technique, which may be of independent interest, results in our ``Chain-King Consensus'' algorithm.
+
+Chain-King Consensus is one-shot, in the sense that it will provide just a single instance of agreement in the permissionless setting in expected-constant time.
+%
+The natural question given such protocol is whether it is possible to apply sequential self-composition with running time remaining expected linear in the number of instances.
+%
+This is a delicate task due to non-simultaneous termination (cf.~\cite{C:CCGZ16}).
+%
+We provide a round-preserving sequential composition solution that first adapts Bracha termination \cite{PODC:Bracha84} to the permissionless setting and reduces the ``termination slack'' among honest parties to 1 phase.
+%
+Then, we adapt the super-phase expansion technique of~\cite{C:CCGZ16} to widen the interval between state updates from 1 phase to 4 phases.
+%
+We identify a set of good properties for a sequence of phases that when they occur parties that are in different timelines can converge on the same single phase and make a unanimous decision to update their state.
+
+\smallskip\noindent\emph{A new PoW-based permissionless fast SMR protocol.}
+%
+Given that Chain-King Consensus is a one-shot multi-valued Byzantine agreement protocol terminating in expected constant rounds, next we show how to build a state machine replication protocol on top of its sequential composition.
+%
+The resulting protocol achieves consistency and expected-constant-time liveness for \emph{all types} of transactions (including the conflicting ones).
+%
+This answers a question left open in previous work on PoW-based fast ledgers \cite{CCS:BKTFV19,TCC:FGKR20}, where fast settlement of transactions was offered only for non-conflicting transactions, thus making our ledger construction the first expected-constant processing time ledger in the PoW setting.
+%
+We note that fast processing of conflicting transactions can be crucial for many applications such as sequencing smart contract operations.
+%
+We also describe how it is possible to ``bootstrap from genesis'': this essential operation permits new parties to join the protocol execution as well as facilitate third party observers who wish to connect and parse the distributed ledger in order to issue transactions or read transaction outputs.

@@ -1,0 +1,22 @@
+\section{Related Work (Cont'd)}
+\label{sec:related-work-contd}
+
+In the na\"{i}ve generalization from \twoforone PoW to \mforone PoW, in order to achieve independence among parallel mining procedures, the random oracle output is split into $m$ non-overlapping segments and each segment is assigned to a unique procedure.
+%
+We remark that in the case of parallel chains, the number of chains becomes the security parameter, and hence $m$ should be chosen sufficiently large to provide security guarantees. In all existing parallel-chain schemes \cite{CCS:BKTFV19,TCC:FGKR20}, a number $m = \Theta(\kappa)$ of parallel chains is adopted.
+
+Notice that since the output of random oracle is a string of length $\kappa$, it is infeasible to directly run $m = \Theta(\kappa)$ chains in parallel, for two reasons.
+%
+On one hand, with $m = \Theta(\kappa)$ repetitions, only a constant number of bits can be allocated to each chain thus upper-bounding the total number of participating parties; on the other hand, a constant number of bits implies a constant output space for the random oracle, where collisions can be found if the execution runs for $L = \poly(\kappa)$ steps.
+
+To solve this, in~\cite{TCC:FGKR20} a new scheme for \mforone PoW is proposed by partitioning the output string into two segments of $\kappa / 2$ bits.
+%
+The first segment indicates whether this query is successful; and the second segment decides on which chain this PoW message is valid.
+%
+I.e., one query can succeed on at most one chain (while in the ideal scheme success on multiple chains is possible).
+%
+This scheme achieves parallel chain sub-independence, and the statistical distance from the ideal parallel random oracles is bounded by the square of the success probability of a single random oracle query.
+%
+Finally, the \mforone scheme presented in~\cite{CCS:BKTFV19} checks if the numeric value of the random oracle output is within a specific range and hence decide on which chain it succeeds.
+%
+As such, this scheme can only succeed in producing blocks on one chain and therefore does not provide full independence.

@@ -1,0 +1,38 @@
+\begin{tabularx}{\textwidth}{c X}
+    \toprule
+    \textbf{Variable}
+     & \textbf{Description}
+    \\ \midrule
+    \round
+     & Party \party's local time.
+    \\ \midrule
+    \phase
+     & Party \party's local phase.
+    \\ \midrule
+    \parallelChainsLocal
+     & Party \party's local parallel chain.
+    \\ \midrule
+    \denseChains
+     & Party \party's local recorded dense chains.
+    \\ \midrule
+    \chainBuffer
+     & The buffer that stores all incoming new parallel-chains and their associated dense chains.
+    \\ \midrule
+    \inputBlockBuffer
+     & The buffer that stores all incoming new input-blocks.
+    \\ \midrule
+    \val
+     & Party \party's suggestion for protocol output.
+    \\ \midrule
+    \lock
+     & Whether \party should adopt the output from chain-king.
+    \\ \midrule
+    \decide
+     & Whether \party has decided to output \val.
+    \\ \midrule
+    \exit
+     & Whether \party should stop mining. $\exit = \infty$ if \party have not yet decided; $\exit = 1$ implies that \party will terminate mining in the next iteration and \party stops mining when $\exit = 0$.
+    \\ \bottomrule
+
+    \caption{Main state variables in \chainKingConsensus.}
+\end{tabularx}

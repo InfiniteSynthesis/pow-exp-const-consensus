@@ -1,0 +1,39 @@
+\begin{tabularx}{\textwidth}{c  X}
+    \toprule
+    \textbf{Parameter}
+     & \textbf{Description}
+    \\ \midrule
+    $\kappa$
+     & Security parameter; length of the random oracle output.
+    \\ \midrule
+    $m$
+     & The number of parallel chains ($m = \Theta(\log^2 \kappa)$).
+    \\ \midrule
+    \phaseLength
+     & The length of a phase in number of rounds, it consists of 3 different stages: (i) view convergence of length \phaseViewLength rounds; (ii) output generation of length \phaseOutputLength rounds; and (iii) reference convergence of length \phaseRefLength rounds.
+    \\ \midrule
+    \densityParam
+     & The density parameter that asks for at least $\densityParam \cdot \phaseRefLength$ blocks in any consecutive rounds of length at least \phaseRefLength in the output generation and reference convergence stage.
+    \\ \midrule
+    $T$
+     & The target to successful solve a PoW.
+    \\ \midrule
+    $h_r$
+     & Number of RO queries made by honest parties at round $r$.
+    \\ \midrule
+    $t_r$
+     & Number of RO queries made by corrupted parties at round $r$.
+    \\ \midrule
+    $\delta$
+     & Advantage of honest parties $(t \le (1 - \delta) h)$.
+    \\ \midrule
+    $f$
+     & Block generation rate; the probability at least one honest party succeeds in finding a PoW in a round.
+    \\ \midrule
+    $\epsilon$
+     & Quality of concentration of random variables in typical executions, cf.~\cref{def:typical-execution}.
+    \\ \bottomrule
+
+    \caption{Main parameters of \chainKingConsensus.}
+    \label{table:main-parameters-protocol}
+\end{tabularx}

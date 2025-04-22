@@ -1,0 +1,76 @@
+\section{Model and Preliminaries}
+\label{sec:model}
+
+Our model of computation follows Canetti's formulation of ``real world'' notion of protocol execution \cite{JC:Canetti00,EPRINT:Canetti00} for multi-party protocols.
+%
+Inputs are provided by an environment program \Z to parties that execute the protocol $\Pi$.
+%
+The adversary \adv is a single entity that takes control of corrupted parties.
+%
+\adv can take control of parties on the fly (i.e., ``adaptive'') and is allowed to observe honest parties' actions before deciding her reaction (i.e., ``rushing'').
+%
+To  specify the ``resources'' that may be available to the instances running protocol $\Pi$---for example, access to reliable point-to-point channels or a ``diffuse'' channel (see below)---we will follow the approach of describing them as \emph{ideal functionalities} in the terminology of~\cite{EPRINT:Canetti00}.
+
+\paragraph{Clock, random oracle, diffusion and CRS functionalities.}
+%
+We divide time into discrete intervals called ``rounds.''
+%
+Parties are always aware of the current round (i.e., synchronous processors) and this is captured by a global clock \funcClock \cite{TCC:KMTZ13}.
+%
+By convention, the hash function $H$ to generate PoWs is modeled as a random oracle \funcRO.
+%
+Message dissemination is synchronous and it guarantees that all honest messages sent at the current round to be delivered to all honest parties at the beginning of the next round.
+%
+This synchronous communication behavior is captured by \funcDiffuse and the adversarial power is limited to reorder messages and let honest parties receive messages originally from \adv in two adjacent rounds by selectively choosing the receiver in the first round.
+%
+Finally, we model a public-state setup by the common reference string (CRS) functionality \funcCRS with some distribution with sufficiently high entropy.
+%
+A full specification of the above resources can be found in~\cref{sec:model-preliminaries-contd}.
+
+\paragraph{Honest majority.}
+%
+We express our honest majority condition in terms of parties' computational power, measured in particular by the number of RO queries that they are allowed per round, as opposed to by the number of parties (which are assumed to have  equal computational power---cf. \cite{EC:GarKiaLeo15}).
+
+\begin{definition*}[Honest majority]
+    Let $h_r, t_r$ denote the number of honest and corrupted random oracle queries at round $r$ respectively.
+    %
+    For all $r \in \mathbb{N}$, it holds that $h_r > t_r$.
+\end{definition*}
+
+To limit the adversary to make a certain number of queries to \funcRO, we adopt the ``wrapper functionality'' approach (cf.~\cite{JC:GMPY11,C:BMTZ17,EC:GKOPZ20}) $\mathcal{W}(\funcRO)$ that wraps the corresponding resource, thus enforcing the limited access to it.
+
+\paragraph{Byzantine agreement.}
+%
+We adapt the definition of the consensus problem (aka Byzantine agreement~\cite{TOPLAS:LamShoPea82}) to our permissionless setting (cf.~\cite{EC:GarKiaLeo15}).
+%
+Note that here agreement implies (eventual) termination.
+%
+\begin{definition*}[Byzantine agreement]
+    A protocol $\Pi$ solves Byzantine Agreement in the synchronous setting provided it satisfies the following two properties:
+    %
+    \begin{cccItemize}[nosep]
+        \item \textbf{\emph{Agreement:}} There is a round after which all honest parties return the same output if queried by the environment.
+        
+        \item \textbf{\emph{Validity:}} The output returned by an honest party \party equals the input of some party $\party'$ at round 1 that is honest at the round \party's output is produced.
+    \end{cccItemize}
+\end{definition*}
+
+\paragraph{Blockchain notation.}
+%
+A block with target $T \in \mathbb{N}$ is a quadruple of the form $\block = \langle ctr, r, h, x \rangle$ where $ctr, r \in \mathbb{N}$, $h \in \{0, 1\}$ and $x \in \{0, 1\}^*$.
+%
+A blockchain \chain is a (possibly empty) sequence of blocks; the rightmost block by convention is denoted by \chainHead{\chain} (note $\chainHead{\varepsilon} = \varepsilon$).
+%
+These blocks are chained in the sense that if $\block_{i + 1} = \langle ctr, r, h, x \rangle$, then $h = H(\block_i)$, where $H(\cdot)$ is cryptographic hash function with output in $\{0, 1\}^\kappa$.
+%
+We adopt \timestamp{\block} to denote the timestamp of \block; and, slightly abusing the notations and omitting the time $r$, we will use $\chainPrefix{\chain}{k}$ to denote the chain from pruning all blocks \block such that $\timestamp{\block} \ge r - k$.
+%
+Let $\parallelChains = \langle \chain_1, \chain_2, \ldots, \chain_m \rangle$ denote $m$ \emph{parallel} chains and $\parallelChains_j$ the $j$-th chain $\chain_j$ in \parallelChains.
+
+\medskip
+%
+Finally, we introduce some basic string notation, which will be useful when describing our multi-chain-oriented PoW mechanism.
+%
+For a $\kappa$-bit string $s$, where $\kappa$ is the security parameter, we will use $s_i~(i \in [m])$ to denote the $i$-th bit of $s$, \stringSegment{s}{i}{m} to denote the $i$-th segment after $s$ is equally divided into $m$ segments---i.e., $\stringSegment{s}{i}{m} = s_{[(i - 1) * \kappa / m ]+ 1}, \ldots, s_{i * \kappa / m}$.
+%
+We will write \stringRev{s} as the reverse of string $s$ (i.e., by flipping all its bits), and use \stringSegmentRev{s}{i}{m} to denote the reverse of the $i$-th segment.

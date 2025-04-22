@@ -1,0 +1,42 @@
+\section{Models and Preliminaries (Cont'd)}
+\label{sec:model-preliminaries-contd}
+
+\paragraph{Clock functionality.}
+%
+We adopt \funcClock (cf.~\cite{TCC:KMTZ13}) to model synchronous processors.
+%
+In a nutshell, \funcClock internally maintains a round variable $\tau$ which is only updatable when all parties send it the \textsc{clock-update} command.
+%
+Whenever a party \party is activated, \party sends a \textsc{clock-read} message to check the current round.
+%
+When round proceeds, \party executes the protocol and send \textsc{clock-update} after it completes all computations; if not, \party does nothing and wait for the next activation.
+%
+By interacting with \funcClock, parties are aware that they proceed in synchronized rounds.
+
+\input{functionalities/global-clock}
+
+\paragraph{Random oracle functionality.}
+%
+By convention, we model the hash function used to generate PoW as a random oracle; this is captured by the functionality \funcRO.
+
+\input{functionalities/random-oracle}
+
+Note that with regards to bounding access to real-world resources, functionality \funcRO as defined fails to limit the adversary on making a certain number of queries per round.
+%
+Hence, we adopt a functionality wrapper \cite{C:BMTZ17,EC:GKOPZ20} $\mathcal{W}(\funcRO)$ that wraps the corresponding resource to capture such restrictions.
+
+\input{functionalities/wrapper-random-oracle}
+
+\paragraph{Diffusion functionality.}
+%
+We model the synchronous communication by \funcDiffuse \cite{C:BMTZ17}.
+%
+Note that we present $\funcDiffuse^\delay$ which is parameterized by the network delay \delay, and the synchronous variant can be easily derived by setting $\delay = 1$.
+
+\input{functionalities/diffuse}
+
+\paragraph{Common reference string functionality.}
+%
+We model a public setup by the CRS functionality \funcCRS.
+
+\input{functionalities/crs}

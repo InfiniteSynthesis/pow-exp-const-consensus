@@ -1,0 +1,50 @@
+\subsection{Bootstrapping from the Genesis Block}
+\label{subsec:bootstrapping-from-genesis}
+
+In this section, we focus on the \emph{observability} property of our SMR protocol.
+%
+Recall that in~\cref{subsec:phase-oblivious-agreement}, we stated that a full agreement on all parallel chains in the previous phase is impossible, and parties that join at a specific phase cannot learn the previous execution by ``tracing back'' using cross-chain reference.
+%
+Thus, it becomes challenging or even impossible for a passive observer to join the protocol in the middle of the execution.
+%
+To solve this, in this section we slightly modify our Chain-King Consensus protocol and design a bootstrapping algorithm for fresh parties to synchronize state with all honest parties.
+%
+Note that the design of a bootstrapping procedure to let fresh parties join is also an essential building block for protocols that support dynamic participation.
+
+When a fresh party \newParty joins, \newParty has no knowledge about the protocol execution except for the CRS and global time (recall that we assume synchronous processors).
+%
+To become synchronized and learn the ledger state, \newParty needs to bootstrap by passively listening to the protocol.
+%
+We highlight that, in order for \newParty to synchronize with other honest parties (i.e., achieving phase oblivious agreement), \newParty needs to run a bootstrapping procedure which lasts for a constant number of rounds (precisely \phaseLength rounds).
+
+In order to let fresh parties join the protocol, we modify our Chain-King Consensus protocol as follows.
+%
+In the $i$-th phase $(i > 1)$, concatenated with the consensus-related input message, parties also include the fresh randomness extracted from their local chains in the $(i - 1)$-th phase.
+%
+More specifically, they extract the hash of the last block in the output generation stage on each chain in the $(i - 1)$-th phase of \parallelChainsLocal, assemble them as a $\kappa$-bit string and append it to the input-block content.
+%
+For chains where a typical execution holds, honest parties adopt the same block hash.
+%
+Next, in $i$-th phase, a Crusader Agreement is  run on the block hash of each chain in the $(i - 1)$-th phase (recall from~\cref{remark:crusader-agreement} that a single phase suffices to serve as a Crusader Agreement protocol).
+%
+I.e., for the $j$-th chain with a typical execution, parties agree on a unique block hash that is the same as their local $\parallelChainsIdx{i - 1}_j$, and for other chains, all parties either output the same hash or $\bot$.
+
+Thus, when a fresh party \newParty joins the protocol, she first passively listens to the protocol for \phaseLength rounds so that she observes the end of a phase, say phase $i$.
+%
+Our chain selection rule (\cref{algorithm:update-local-chain}) guarantees that \newParty has parallel chains in phase $i$ that obliviously agree with other honest parties on more than $3m/4$ chains (recall \cref{thm:phase-oblivious-agreement}).
+%
+Now, \newParty can ``trace back'' all the chains where typical execution holds by using the fresh randomness included in the current phase; and iterate them phase-by-phase.
+%
+Specifically, when \newParty is at the end of phase $i$, she runs \cref{algorithm:joining-procedure} to extract the hashes of dense chains in the previous phase and use them to form her local chain $\parallelChainsLocal^{(i - 1)}$.
+%
+For instance, consider the $j$-th chain in the $(i - 1)$-th phase.
+%
+If on more than $3m/4$ chains in phase $i$, a majority of the input blocks report fresh randomness that matches a chain $\chain \in \denseChains[i - 1][j]$, then \newParty will select \chain and add it as the $j$-th chain in $\parallelChainsLocal^{(i - 1)}$.
+%
+If no such chain exists, \newParty will randomly pick a chain or just leave it empty.
+
+\input{algorithms/joining-procedure}
+
+Note that the security of both Chain-King Consensus and Crusader Agreement only rely on the consistent view of chains where typical execution holds; hence, at the end of the joining procedure, \newParty achieves phase oblivious agreement with all honest parties.
+%
+As a result, \newParty can reconstruct the entire execution and update her internal state to build the whole ledger.

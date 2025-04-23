@@ -1,0 +1,56 @@
+\begin{cccAlgorithm}
+    {\textsf{JoiningProcedure}}
+    {joining-procedure}
+    {The joining procedure for a fresh party.}
+
+    \begin{algorithmic}[1]
+        \For{$i = 1$ \textbf{to} \phaseLength}
+        
+        \State{Fetch information and dentoe the incoming chains and input-blocks by $\langle \parallelChains, denseChains \rangle_1,\allowbreak \ldots, \langle \parallelChains, denseChains \rangle_n$ and $\IB_1, \ldots, \IB_{n'}$}
+        
+        \State{Add $\langle \parallelChains, denseChains \rangle_1, \ldots, \langle \parallelChains, denseChains \rangle_n$ to \chainBuffer}
+        
+        \State{Add  $\IB_1, \ldots, \IB_{n'}$ to \inputBlockBuffer}
+        
+        \State{$\parallelChainsLocal \gets \mathsf{UpdateLocalChain}(\parallelChainsLocal, \langle \parallelChains, denseChains \rangle_1, \ldots, \allowbreak \langle \parallelChains, denseChains \rangle_n)$}
+
+        \If{$\round \mod \phaseLength = 1$} \Comment{Retrieve all previous phase}
+        
+        \For{$i$ \textbf{from} $\phase - 1$ to $1$}
+        
+        \For{$j = 1$ \textbf{to} $m$}
+        
+        \State{$\chain \gets \parallelChainsIdx{i + 1}_j$}
+        
+        \State{Initialize $\vec{h}$ to an empty array}
+        
+        \For{$q = 1$ \textbf{to} $m$}
+        \State{Initialize $\vec{M}$ to an empty array}
+        \For{$\block \in \chain $ \textbf{and} $tp \cdot \phaseLength - (\phaseOutputLength + \phaseRefLength) < \timestamp{\block} \le tp \cdot \phaseLength - \phaseRefLength$}
+        \State{Parse chain pointer to last phase as $h'$}
+        \State{Append $\stringSegment{h'}{q}{m}$ to $\vec{M}$}
+        \EndFor
+        \State{Sort $\vec{M}$ then append $\med(\vec{M})$ to $\vec{h}$}
+        \EndFor
+        
+        \State{Let $h$ denote the most frequent element in $\vec{h}$ and $c$ its frequency}
+        
+        \If{$c >3m/4$ \textbf{and} $\exists \chain \in \denseChains[i][j]$ such that $\stringSegment{\chainHead{\chainPrefix{\chain}{\phaseRefLength}}}{j}{m} = h$}
+        \State{Add \chain as the $j$-th chain in $\parallelChainsLocal^{(i)}$}
+        \Else
+        \State{Choose a chain $\chain \in \denseChains[i][j]$ randomly as the $j$-th chain in $\parallelChainsLocal^{(i)}$ (or if no dense chain, select one from incoming $\parallelChainsIdx{i}_j$ randomly)}
+        \EndIf
+        
+        \EndFor
+        
+        \EndFor
+        
+        \EndIf
+        
+        \EndFor
+        
+        \State{Call $\mathsf{StateUpdate}$ on each phase to build the ledger}
+        
+        \State{Set synchronized with all honest parties}
+    \end{algorithmic}
+\end{cccAlgorithm}

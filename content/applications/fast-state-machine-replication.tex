@@ -1,0 +1,95 @@
+\subsection{From Sequential Composition to State Machine Replication}
+\label{subsec:fast-state-machine-replication}
+
+An SMR protocol accepts a batch of transactions as input.
+%
+While we omit here the details on the particular form of the transactions, we note that the input domain is of exponential size.
+%
+Thus, ``strong validity'' (i.e., the requirement that output is at least one honest input) is impossible even if the adversary only controls a tiny fraction of the computational power (cf.~\cref{remark:strong-validity}).
+%
+Also note that a unanimous start would rarely happen given that the adversary can collude with clients and send different or conflicting transactions to different parties.
+%
+Therefore, if we follow the method from \cref{subsec:chain-king-consensus}---e.g., to apply the median or plurality rule---to select the output on the king chain, as long as the adversary carefully selects the set of transactions, he can always make his input batch be selected as the output.
+%
+By carefully constructing such transaction batches, the adversary will be able to indefinitely delay the confirmation of any honest transaction \tx, even if \tx has been provided to all honest participants.
+
+\paragraph{Proof-of-Work as a lottery.}
+%
+We now present a new construction that helps preventing the adversarial control described above when parties do not start unanimously.
+%
+In a nutshell, when a party \party is still ``confused'' at the end of an iteration (i.e., her internal variable \lock remains \false), \party adopts the output of the king chain as her new input, which is the (valid) input-block reported in the first chain, with the  \emph{smallest} block hash.
+%
+When the honest parties obliviously agree on the king chain (which happens with constant probability), they will refer to the same block.
+%
+Notice that honest parties make more RO queries than the corrupted parties.
+%
+The following lemma shows that with probability (roughly) one half, the input-block with smallest block hash is produced by an honest party.
+
+\begin{lemma} \label{lemma:smallest-hash}
+    Let $h = \poly(\kappa)$ and $t = \poly(\kappa)$ denote the number of random oracle queries made by honest and corrupted parties, respectively.
+    %
+    Under honest majority assumption $(h > t)$, the probability that the smallest RO output is from an honest query is $1 / 2 - \negl(\kappa)$.
+\end{lemma}
+
+\begin{proof}
+    Suppose $X_1, X_2, \ldots, X_h$ are $h$ i.i.d. uniform random variables and let $X = \min \{ X_1, X_2, \ldots,\allowbreak X_h \}$ and $X' = \min \{ X_1, X_2, \ldots, X_t \}$ where $t < h$.
+    %
+    Similarly, suppose $Y_1, Y_2, \ldots, Y_t$ are $t$ i.i.d. uniform random variables and let $Y = \min \{ Y_1, Y_2, \ldots, Y_t \}$.
+    %
+    Let $s = \kappa / m = \omega(\log \kappa)$ denote the length of RO output with respect to a single chain.
+    %
+    We have $\Pr[X < Y] \ge \Pr[X' < Y]$.
+    \begin{align*}
+        \Pr[X < Y] & = \sum_{i = 0}^{2^{s} - 1} (\Pr[X \le i] - \Pr[X \le (i - 1)]) \cdot \Pr[Y > i]
+        \\
+                   & < \sum_{i = 0}^{2^s - 1} \Big( \big[1 - (\Pr[X_1 > i])^t \big] - \big[1 - (\Pr[X_i > i - 1])^t \big] \Big) \cdot \Pr[Y > i]
+        \\
+                   & = \sum_{i = 0}^{2^s - 1} \Pr[X' = i] \cdot \Pr[Y > i] = \Pr[X' < Y].
+    \end{align*}
+    %
+    Since $X'$ and $Y$ are two i.i.d. random variables, we have $\Pr[X' < Y] = \Pr[X' > Y]$.
+    %
+    Recall that $t = \poly(\kappa)$, let $C$ denote the event that a collision happens with $2t$ RO queries.
+    %
+    We have $\Pr[C] \le (2t)^2 2^{-s} = \exp(-\Omega(\polylog \kappa + \ln t)) = \negl(\kappa)$ --- i.e., a collision happens with negligible probability.
+    %
+    Notice that $X' = Y$ implies a collision, we have $\Pr[X' = Y] < \Pr[C]$.
+    %
+    Hence $\Pr[X < Y] > \Pr[X' < Y] = \Pr[X' > Y] = 1 / 2 -\negl(\kappa)$.
+\end{proof}
+
+\paragraph{Fast state machine replication.}
+%
+We are now ready describe our SMR protocol.
+%
+At a high level, it can be viewed as the sequential composition of Chain-King Consensus, equipped with a new phase output extraction algorithm, described as follows.
+%
+When parties are extracting output in the first and second phase of an iteration, for each chain they will output $v$ if the majority of input-blocks is $v$; otherwise they will output $\bot$ (in this way, the adversary cannot let parties decide on a batch of transactions that is not an honest input in the first two stages).
+%
+When they are in the third phase (i.e., that's when the ``confused'' parties listen to the king chain) they will output the input-block with the smallest hash value.
+
+\begin{theorem} \label{thm:state-machine-replication}
+    There exist protocol parameterizations such that the sequential composition of Chain-King Consensus with the minimum-PoW king selection rule satisfies Consistency and expected-constant Liveness.
+\end{theorem}
+
+\begin{proof}
+    Consistency is straightforward.
+    %
+    For each invocation of chain-king consensus, the output is a batch of transactions.
+    %
+    After serialization, these transactions are appended to the ledger and are considered as settled.
+    %
+    These transactions will be at the same position in the ledger of all honest parties in the same or neighboring phases.
+
+    Regarding Liveness, suppose a transaction \tx is diffused to all honest parties at the onset of an invocation of chain-king consensus.
+    %
+    In the first and second phase in an iteration, the adversary cannot let parties decide on a set of transactions that does not include \tx, as \tx is in all honest input and the adversary cannot produce the majority of the blocks in more than $m/2$ chains.
+    %
+    With constant probability, every party shares a consistent view of the king chain and they will then decide.
+    %
+    Further, with constant probability the input-block with smallest hash in the king chain is produced by an honest party, which includes \tx.
+    %
+    When the honest parties are unlucky to lose the race of producing smallest hash, \tx remains in the pending transaction pool of all honest parties and is included in the input for the next invocation of chain-king consensus.
+    %
+    Given that each invocation has expected-constant round complexity, and the probability that \tx is in the output is roughly $1 / 2$, we learn that the time for \tx to get settled in the ledger is also expected-constant.
+\end{proof}

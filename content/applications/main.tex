@@ -1,0 +1,57 @@
+\section{Application: Fast State Machine Replication}
+\label{sec:fast-state-machine-replication}
+
+We now show how to adapt the sequential composition approach in~\cref{subsec:fast-sequential-composition} to implement a state machine replication (SMR) protocol.
+%
+Our resulting protocol achieves both Consistency and expected-constant-time Liveness for all types of transactions (including conflicting ones).
+%
+Namely, for any transaction \tx, when \tx is diffused to all honest participants (miners), it takes in expectation a constant number of rounds to get settled into the immutable final ledger.
+
+We first give our definition of SMR, and elaborate on why fast SMR protocol cannot be directly derived from the sequential composition of multi-valued Chain-King Consensus.
+%
+Then, in~\cref{subsec:fast-state-machine-replication} we propose a new method that introduces randomness to the output of the king chain and helps circumvent the above problem while preserving expected-constant settlement time for all types of transactions.
+%
+Finally, in~\cref{subsec:bootstrapping-from-genesis} we show how a third party observer, joining in the middle of the protocol, can catch up with honest parties and learn the state of the ledger.
+
+\paragraph{SMR background.}
+%
+State machine replication (SMR) is the problem of distributing the operation of a state machine across a set of replicas so that the operation of the machine is resilient to failure of a subset of the replicas.
+%
+This concept was originally described in~\cite{CACM:Lamport78},
+%
+and later further elaborated on by Schneider \cite{CSUR:Schneider90} where a high-level description of SMR was provided.
+%
+Blockchain protocols, and in particular Bitcoin's~\cite{Nak08} have renewed interest in SMR definitions and constructions, as they can be seen as a way to realize SMR in a setting where there is no predetermined set of replicas.
+%
+This has been studied and formalized in a series of works (e.g., \cite{EPRINT:GarKiaLeo14,EC:PasSeeash17,RSA:GarKia20}).
+
+We now give a concise definition of SMR.
+%
+A number of $n$ servers, a subset \honestPartySet of which is assumed to be non-faulty, maintain a log of transactions, denoted $\mathsf{Log}$.
+%
+The log of each server also timestamps each transaction.
+%
+The notation $\mathsf{Log}_i[t]$  denotes the log of the server $\party_i$ up to time $t$.
+%
+Furthermore, it is assumed that each server has a buffer for incoming transactions, denoted by $I_i[t]$, that are valid with respect to its view (invalid transactions are dropped).
+%
+Finally, and for simplicity, assume that all well-formed transactions are admissible in the log. In SMR, the following two conditions must be satisfied:
+
+\begin{cccItemize}[noitemsep]
+      \item \textbf{Consistency:} $\forall \party_i, \party_j \in \honestPartySet$ (where not necessarily $i \neq j$) and $t, t'$ it holds that $ \mathsf{Log}_i[t]  \preceq \mathsf{Log}_j [t']$ or $\mathsf{Log}_j [t'] \preceq  \mathsf{Log}_i[t]$.
+      
+      \item \textbf{Liveness:} There is a parameter $u\in\mathbb{N}$ for which the following holds: $(\forall \party_i \in \honestPartySet : \tx \in I_i[t] ) \implies \tx \in \mathsf{Log}_i[t + u]$.
+\end{cccItemize}
+
+Typically, the Liveness parameter $u$ is a pre-defined value according to the protocol parameterization.
+%
+It is natural to extend the notion and allow $u$ to be a random variable with a distribution that depends on the specific parameterization.
+%
+I.e., given a transaction \tx appearing in all honest buffers at time $t$, the probability that it is included in all honest logs at time $t + u$ shares the same distribution with $u$.
+%
+In our protocol, we achieve $u$ with a geometric distribution, hence the time for \tx to get installed in the immutable ledger is expected-constant.
+
+Note that there are more properties of interest for SMR, such as \emph{observability}, which is the requirement that a third party observer be capable of interpreting correctly the current state of the ledger by inspecting the logs of the servers.
+
+\input{content/applications/fast-state-machine-replication}
+\input{content/applications/bootstrap-from-genesis}

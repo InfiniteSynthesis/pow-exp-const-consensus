@@ -1,0 +1,190 @@
+\subsection{Proof of~\cref*{thm:phase-oblivious-agreement}}
+\label{subsec:analysis-phase-oblivious-agreement}
+
+In a typical execution, the random variables satisfy the following properties.
+
+\begin{lemma}
+    [cf.~\cite{EPRINT:GarKiaLeo14}]
+    \label{lemma:random-variable-bounds}
+
+    The following hold for any set $S$ of at least $k$ consecutive rounds in a typical execution.
+    %
+    Note that the relations on $X(S)$ ($Z(S)$ resp.) also applies on $X'(S)$ ($Z'(S)$ resp.).
+    %
+    \begin{enumerate}[label=(\alph*), leftmargin=*, nosep]
+        \item $(1 - \epsilon) f |S| < X(S) < (1 + \epsilon) f |S|$ and $(1 - \delta / 3) f |S| < Y(S)$.
+        \item $Z(S) < (1 - 2\delta / 3) f |S|$.
+        \item $Z(S) < (1 - \delta / 2) X(S)$ and $Z(S) < Y(S)$.
+    \end{enumerate}
+\end{lemma}
+
+To achieve phase oblivious agreement, certain conditions on the length of phases and stages should be satisfied which we summarize as follows.
+%
+\begin{equation} \tag{C2} \label{condition:phase-length}
+    \phaseRefLength \ge \frac{8k}{\delta};~
+    \phaseViewLength \ge (\frac{3}{\delta} - 2)\phaseRefLength + (\frac{3}{\delta} - 1)k
+    ~~\text{and}~~
+    \phaseOutputLength \ge \frac{12}{\delta}(\phaseViewLength + k)
+\end{equation}
+%
+Also, we require that the density parameter \densityParam is set such that it is roughly the same as block generation rate $f$.
+%
+\begin{equation} \tag{C3} \label{condition:density-param}
+    \densityParam = (1 - \epsilon) (1 - \frac{2k}{\phaseRefLength}) f.
+\end{equation}
+
+We now consider two lemmas --- \cref{lemma:common-prefix-existential-chain-quality,lemma:honest-only-density-chain} in the first phase where parties start simultaneously with CRS.
+%
+Notice that neither lemma can be applied unconditionally in the second and later phases, as in these phases the adversary can pre-mine for a bounded amount of time.
+%
+We will treat them carefully in the proof of \cref{thm:phase-oblivious-agreement}.
+
+First, \cref{lemma:common-prefix-existential-chain-quality} considers two basic blockchain properties --- common prefix and existential chain quality.
+%
+A detailed proof can be found in \cite{EPRINT:GarKiaLeo14}.
+
+\begin{lemma} \label{lemma:common-prefix-existential-chain-quality}
+    The following two properties hold in a typical execution.
+    %
+    \begin{cccItemize}[nosep]
+        \item \emph{\textbf{Common prefix.}} Let $\chain_1, \chain_2$ denote two chains held by two honest parties $\party_1, \party_2$ respectively at round $r$.
+        %
+        It holds that $\chainPrefix{\chain_1}{k} = \chainPrefix{\chain_2}{k}$
+
+        \item \emph{\textbf{Existential chain quality.}} For any set $S$ of $k$ consecutive rounds, there is at least one block $\block \in \chain$ such that the timestamp of \block is in $S$ and \block is produced by an honest party.
+    \end{cccItemize}
+\end{lemma}
+
+\begin{proof}[Proof(sketch)]
+    To show common prefix, we consider a contradiction.
+    %
+    Suppose $\chainPrefix{\chain_1}{k} \neq \chainPrefix{\chain_2}{k}$, and let \block be the last honest block on the common part of $\chain_1$ and $\chain_2$ and $r^*$ its timestamp.
+    %
+    Let $S = \{r^*, \ldots, r\}$.
+    %
+    Since $\chainPrefix{\chain_1}{k} \neq \chainPrefix{\chain_2}{k}$ we have $Z(S) > Y(S)$ (by pairing every unique successful round with an adversarial block) which contradicts \cref{lemma:random-variable-bounds}(c).
+
+    Regarding existential chain quality, since the adversary cannot create a fork more than $k$ rounds it implies he cannot revert all honest blocks in a consecutive $k$ rounds.
+\end{proof}
+
+Next, since chain selection rule asks for cross-chain reference that links to sufficiently many dense chains, we show that when the execution is typical in the first phase, honest parties can prepare a dense chain by themselves.
+
+\begin{lemma} \label{lemma:honest-only-density-chain}
+    In a typical execution, all honest parties hold a dense chain at the end of the first phase.
+\end{lemma}
+
+\begin{proof}
+    Let \chain denote a chain held by an honest party \party at the end of $i$-th phase.
+    %
+    Consider a set $S = \{u, \ldots ,v\}$ consecutive rounds where $|S| > \phaseRefLength$.
+    %
+    By~\cref{lemma:common-prefix-existential-chain-quality}, there exists at least one honest block \block with timestamp $r \in [u, u + k)$ and at least one honest block $\block'$ with timestamp $r' \in (v - k, v]$.
+    %
+    Let $S' = \{r, r + 1, \ldots, r' \}$.
+    %
+    We learn that the number of blocks in $S$ is lower-bounded as follows.
+    %
+    \[ X(S') \ge (1 - \epsilon) f |S'| \ge (1 - \epsilon)(1 - \frac{2k}{\phaseRefLength}) f |S| \ge \densityParam |S|. \]
+    %
+    The first inequality follows~\cref{lemma:random-variable-bounds}(a); the second is because $|S'| \ge |S| - 2k = (1 - (2k / |S|))|S| \ge (1 - (2k / \phaseRefLength))|S|$; and the last one follows Condition~\eqref{condition:density-param}.
+\end{proof}
+
+The following lemma proves an upper-bound on pre-mining in phase $i + 1$, given that phase $i$ achieves phase oblivious agreement.
+
+\begin{lemma}
+    If parties achieves phase oblivious agreement in phase $i$, the adversary cannot mine valid blocks in phase $i + 1$ before round $i \cdot \phaseLength - \phaseRefLength - k$.
+\end{lemma}
+
+\begin{proof}
+    Without loss of generality, for the sake of a contradiction, suppose the $i$-th phase is the earliest phase such that parties mine valid blocks in the $(i + 1)$-th phase before round $i \cdot \phaseLength - \phaseRefLength - k$.
+    %
+    I.e., they prepare at least $(3m / 4 + 1)$ dense chains before this round.
+    %
+    We consider three types of adversarial strategies.
+
+    First, the adversary stick to the typical chains in phase $i$ and start to mine blocks in phase $i + 1$ after he learns sufficiently many block hashes on dense chains.
+    %
+    Consider an arbitrary chain in phase $i$ such that typical execution holds.
+    %
+    \cref{lemma:common-prefix-existential-chain-quality} implies that there is an honest block with timestamp $r$ in $(i \cdot \phaseLength - \phaseRefLength - k, i \cdot \phaseLength - \phaseRefLength]$ which is produce at round $r$.
+    %
+    If the adversary starts earlier than $i \cdot \phaseLength - \phaseRefLength - k$, it implies a prediction which contradicts the execution being typical.
+
+    Second, the adversary stick to the typical chains for a while and at some point $r > (i - 1)\phaseLength + \phaseViewLength$ he creates a fork from the honest chain.
+    %
+    In order for this fork to be dense, the adversary should prepare at least $\densityParam \cdot (i \cdot \phaseLength  - r)$ blocks on his own in rounds $S = \{r, r + 1, \ldots, i \cdot \phaseLength - \phaseRefLength - k\}$.
+    %
+    However, we get the following contradiction.
+    %
+    \[ Z(S) < (1 - \frac{2\delta}{3}) f |S| < (1 - \frac{2k}{\phaseRefLength})(1 - \epsilon) f |S| <  \densityParam \cdot |S + \phaseRefLength + k|. \]
+    %
+    The first inequality comes from~\cref{lemma:random-variable-bounds}(b); the second one follows Condition~\eqref{condition:delta-advantage} and the inequality between $k$ and \phaseRefLength in Condition~\eqref{condition:phase-length}; and the last one is achieved by substituting the density parameter \densityParam.
+
+    Third, the adversary builds a chain on his own as soon as he learns the fresh randomness in phase $i - 1$ and for all blocks in this private chain he insert fake timestamps in the last two stages.
+    %
+    I.e., he needs to prepare $\densityParam \cdot (\phaseOutputLength + \phaseRefLength)$ blocks on his own in $\phaseLength + k$ rounds.
+    %
+    We get the following contradiction.
+    %
+    \[ Z(\phaseLength + k) < (1 - \frac{2\delta}{3}) f |\phaseLength + k| < (1 - \frac{2k}{\phaseRefLength})(1 - \epsilon)(1 - \frac{\delta}{12}) f |\phaseLength + k| <  \densityParam \cdot |\phaseOutputLength + \phaseRefLength|. \]
+    %
+    The first inequality comes from~\cref{lemma:random-variable-bounds}(b); the second one follows Condition~\eqref{condition:delta-advantage} and the inequality between $k$ and \phaseRefLength in Condition~\eqref{condition:phase-length}; and the last one is achieved by substituting the density parameter \densityParam and the inequality between \phaseViewLength and \phaseOutputLength in Condition~\eqref{condition:phase-length}.
+\end{proof}
+
+We now restate and formally prove~\cref{thm:phase-oblivious-agreement} in~\cref{subsec:phase-oblivious-agreement}.
+
+\theoremphaseobliviousagreement*
+
+\begin{proof}
+    We prove by induction.
+
+    Consider the first phase.
+    %
+    \cref{thm:typical-execution-parallel-chain} shows that typical execution holds on at least $\beta$ fraction of the chains.
+    %
+    Consider the $j$-th execution on $j$-th chain where typical execution holds.
+    %
+    At the end of round \phaseLength, let \chain and $\chain'$ be chains held by two honest parties respectively.
+    %
+    By common prefix (\cref{lemma:common-prefix-existential-chain-quality}) it holds that $\chainPrefix{\chain}{k} = \chainPrefix{\chain'}{k}$ hence $\chainPrefix{\chain}{\phaseRefLength} = \chainPrefix{\chain'}{\phaseRefLength}$.
+
+    Moreover, existential chain quality (\cref{lemma:common-prefix-existential-chain-quality}) implies that there is at least one honest block with timestamp in $(\phaseViewLength - k, \phaseViewLength]$, and there is at least one honest block with timestamp in $(\phaseViewLength - 2k, \phaseViewLength - k]$.
+    %
+    Thus, for the last block in the view convergence phase it is produced in at round $r^* > \phaseViewLength - 2k$ where $r^*$ is the earliest time that the adversary can produce valid input-blocks on chain $j$.
+    %
+    Similarly there is at least one honest block with timestamp in  $(\phaseViewLength + \phaseOutputLength - k, \phaseViewLength + \phaseOutputLength]$.
+    %
+    We learn that the honest parties can collect input-blocks mined in a set $H$ of consecutive rounds of length at least $\phaseOutputLength - k$; and the adversary can collect input-blocks mined in a set of consecutive rounds of length no more than $|H| + 3k$ (where $2k$ rounds comes from pre-mining and $k$ rounds comes from post-mining).
+    %
+    We learn that the majority of input-blocks included in the output generation stage of the first phase are produced by honest parties from the following inequality.
+    %
+    \[ Z'(|H| + 3k) < (1 - \frac{2\delta}{3}) f (|H| + 3k) \le (1 - \frac{2\delta}{3}) (1 + \frac{2\delta / 3 - \epsilon}{1 - 2\delta / 3}) f |H| < (1 - \epsilon) f |H| < X'(H) \]
+    %
+    The first inequality is from~\cref{lemma:random-variable-bounds}(b); the next one is by the inequality between \phaseViewLength and $k$ in Condition~\eqref{condition:phase-length}; and the last inequality is by~\cref{lemma:random-variable-bounds}(a).
+
+    We also note that  all honest parties hold at least $(3m / 4 + 1)$ dense chains by~\cref{lemma:honest-only-density-chain}.
+
+    Now, suppose the $i$-th phase satisfies phase oblivious agreement, we show that this also holds for the $(i + 1)$-th phase.
+
+    First, assume the execution on $j$-th chain is typical and let \chain denote a chain held by an honest party after the view convergence phase in phase $i + 1$.
+    %
+    We show that the adversarial advantage from pre-mining can only revert all honest blocks up to time $i \phaseLength  + \phaseViewLength - k$.
+    %
+    Let $S = \{i \phaseLength - \phaseRefLength - k, i \phaseLength + \phaseViewLength - k\}$ and  $S' = \{i \phaseLength, i \phaseLength + \phaseViewLength - k\}$.
+    %
+    If the adversary reverts all honest blocks before round $ i \phaseLength + \phaseViewLength - k$, we have $Z(S) \ge Y(S')$.
+    %
+    We get the following contradiction.
+    %
+    \[ Z(S) < (1 - \frac{2\delta}{3}) f |S| \le (1 - \frac{2\delta}{3})(1 + \frac{1}{3 / \delta -2}) f |S'| < (1 - \frac{\delta}{3}) f |S'| < Y(S'). \]
+    %
+    The first inequality is from~\cref{lemma:random-variable-bounds}(b); the next one is by the inequality between \phaseViewLength and \phaseRefLength in Condition~\eqref{condition:phase-length}; and the last inequality is again by~\cref{lemma:random-variable-bounds}(a).
+
+    Since the adversarial pre-mining can revert all honest blocks up to time $i \phaseLength + \phaseViewLength - k$, we learn that there must exist one honest block \block in \chain with timestamp $r \in (i \phaseLength  + \phaseViewLength - 2k, i \phaseLength + \phaseViewLength - k]$ and at least one honest block $\block'$ with timestamp $r' \in (i \phaseLength + \phaseViewLength -k, i \phaseLength + \phaseViewLength]$.
+    %
+    Note that if the adversary choose not to revert an honest block at an earlier time before $i \phaseLength + \phaseViewLength - k$, since the unpredictability of honest blocks he will lose all advantage.
+    %
+    And the existence of \block and $\block'$ can be argued by existential chain quality.
+    %
+    Following a similar argument we conclude agreement and honest input-block majority in phase $i + 1$.
+\end{proof}

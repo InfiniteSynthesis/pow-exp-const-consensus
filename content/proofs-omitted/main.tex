@@ -1,0 +1,28 @@
+\section{Proofs Omitted in the Main Body}
+\label{sec:proofs-omitted}
+
+The following mathematical facts are of interest.
+
+\begin{theorem}
+    [Chernoff bounds]
+    \label{thm:chernoff-bounds}
+
+    Suppose $\{X_i: i \in [n]\}$ are mutually independent Boolean random variables, with $\Pr[X_i = 1] = p$, for all $i \in [n]$. Let $X =\sum^n_{i = 1} X_i$ and $\mu = pn$.
+    %
+    Then, for any $\delta \in (0, 1]$, it holds that
+    %
+    \[
+        \Pr [X \le (1 - \delta) \mu] \le e^{- \delta^2 \mu / 2}
+        ~~\text{and}~~
+        \Pr [X \ge (1 + \delta) \mu] \le e^{- \delta^2 \mu / 3}.
+    \]
+    %
+    Also, for all $t > 0$,
+    %
+    \[ \Pr[X \ge \mu + t] \le e^{-2 t^2 n}. \]
+\end{theorem}
+
+We summarize all protocol parameters and their explanation in~\cref{table:main-parameters-protocol} in~\cref{sec:glossary}.
+
+\input{content/proofs-omitted/parallel-chain-typical-execution}
+\input{content/proofs-omitted/analysis-phase-oblivious-agreement}

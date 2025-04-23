@@ -1,0 +1,141 @@
+\subsection{Proof of~\cref*{thm:typical-execution-parallel-chain}}
+\label{subsec:typical-exeuction-parallel-chains}
+
+In this section we present a formal analysis of the security of parallel chains by using the typical execution analytical framework from \cite{EPRINT:GarKiaLeo14,C:GarKiaLeo17}.
+
+\paragraph{Notations and preliminaries.}
+%
+We write $h$ as the number of honest RO queries and $t$ as the number of corrupted RO queries.
+%
+To illustrate the honest advantage against the adversary, we adopt an additional parameter $\delta \in (0, 1]$ such that $t \le (1 - \delta) h$.
+%
+In order for our protocol to work, the following conditions should be satisfied.
+%
+\begin{equation} \tag{C1} \label{condition:delta-advantage}
+    3f + 3\epsilon < \delta \le 1.
+\end{equation}
+
+For the purpose of estimating the number of blocks acquired by honest parties during a sequence of rounds, we define the following random variables $X, X', Y, Z, Z'$ with respect to round $r$.
+%
+First, if in round $r$ \emph{at least} one honest party successfully solves a PoW with respect to chain-block, then $X_r = 1$ (we call $r$ a successful round); otherwise $X_r = 0$.
+%
+If in round $r$ \emph{at least} one honest party successfully solves a PoW with respect to input-block, then $X'_r = 1$; otherwise $X'_r = 0$.
+%
+If in round $r$ \emph{exactly} one honest party solves a PoW w.r.t. chain-block, then $Y_r = 1$ (we call $r$ a unique successful round); otherwise $Y_r = 0$.
+%
+Regarding the adversary, let $Z_r$ ($Z'_r$ resp.) denote the total number of successful PoWs with respect o chain-blocks (input-blocks resp.) that the adversary gets at round $r$.
+%
+Note that $Z_r$ ($Z'_r$ resp.) can be viewed as the sum of Bernoulli random variable $Z_{rij}$ ($Z'_{rij}$ reps.) denote the $i$-th query of the $j$-th corrupted party in round $r$.
+%
+For a set of rounds $S$, let $X(S) = \sum_{r \in S} X_r$ and similarly define $X'(S), Y(S), Z(S)$ and $Z'(S)$.
+
+The following mathematical facts with respect to $X_r, X'_r, Y_r, Z_r, Z'_r$, derived from the $q$-bounded model \cite{EPRINT:GarKiaLeo14} to one query per party per round, can be useful in later proofs.
+%
+\begin{align*}
+    (1 - f) p h < f = & \EX[X_r] = \EX[X'_r] = 1 - (1 - p)^{h} < p h,
+    \\
+                      & \EX[Y_r] \ge p h (1 - p)^{h - 1} > p h [1 - p h] \ge f (1 - f),
+    \\
+                      & \EX[Z_r] = \EX[Z'_r] = p t = \frac{t}{h} p h < \frac{t}{h} \frac{f}{1 - f} < (1 + \frac{\delta}{2}) \cdot f \cdot \frac{t}{h}.
+\end{align*}
+
+\paragraph{Typical executions.}
+%
+We formally define typical executions.
+%
+An execution is typical if for any set $S$ of at least $k$ consecutive rounds, it holds that (i) for all random variables $X(S), X'(S), Y(S), Z(S)$ and $Z'(S)$, the deviation from their expected value is bounded by a concentration quality parameter $\epsilon$; and (ii) no bad events with respect to random oracle (collisions) happen during these rounds.
+
+Regarding bad events with respect to random oracle (cf.~\cite{EPRINT:GarKiaLeo14}), an \emph{insertion} occurs when, given a chain \chain with two consecutive blocks \block and $\block'$, a block $\block^*$ created after $\block'$ is such that $\block, \block^*, \block'$ form three consecutive blocks of a valid chain; a \emph{copy} occurs if the same block exists in two different positions; a \emph{prediction} occurs when a block extends one which was computed at a later round.
+
+\begin{definition}
+    [Typical execution]
+    \label{def:typical-execution}
+
+    An execution is $(\epsilon, k)$-typical, for $\epsilon \in (0, 1)$ and constant integer $k$ if, for any set $S$ of at least $k$ consecutive rounds, the following hold.
+    %
+    \begin{enumerate}[label=(\alph*), leftmargin=*, nosep]
+        \item $(1 - \epsilon) \EX[X(S)] < X(S) < (1 + \epsilon) \EX[X(S)]$ and $(1 - \epsilon) \EX[X'(S)] < X'(S) < (1 + \epsilon) \EX[X'(S)]$
+
+        \item $(1 - \epsilon) \EX[Y(S)] < Y(S)$.
+
+        \item $Z(S) < \EX[Z(S)] + \epsilon \EX[X(S)]$ and $Z'(S) < \EX[Z'(S)] + \epsilon \EX[X'(S)]$.
+
+        \item No insertions, no copies, and no predictions occurred.
+    \end{enumerate}
+\end{definition}
+
+With typical executions and random variables defined above, we prove the following lemma.
+
+\begin{lemma} \label{lemma:typical-execution-single-chain}
+    For any $\beta < 1$, there exist protocol parameterizations such that an execution running for a constant number \phaseLength of rounds is typical with probability at least $\beta$.
+\end{lemma}
+
+\begin{proof}
+    Regarding Property (a), (b) and (c), consider any $k$ consecutive rounds.
+    %
+    Let $\mathsf{badX}$ denote the event that either $X(S) \ge (1 + \epsilon) \EX[X(S)]$ or $X(S) \le (1 - \epsilon) \EX[X(S)]$; let $\mathsf{badY}$ denote the event that $Y(S) \le (1 - \epsilon) \EX[Y(S)]$; and let $\mathsf{badZ}$ denote the event that $Z(S) \ge \EX[Z(S)] + \epsilon \EX[X(S)]$.
+    %
+    Following the Chernoff Bounds (\cref{thm:chernoff-bounds}), we have
+    %
+    \begin{align*}
+        \Pr[\mathsf{badX}] = \Pr[\mathsf{badX}'] & \le \exp(-\epsilon f k / 3) + \exp(-\epsilon f k / 2),
+        \\
+        \Pr[\mathsf{badY}]                       & \le \exp(-\epsilon f k / 2),
+        \\
+        \Pr[\mathsf{badZ}] = \Pr[\mathsf{badZ}'] & \le \exp(-2\epsilon^2 f^2 k^3).
+    \end{align*}
+    %
+    The probability that neither one of them happens is lower-bounded by
+    %
+    \[ \Pr \big[\neg \mathsf{badX} \wedge \neg \mathsf{badX}' \wedge \neg \mathsf{badY} \wedge \neg \mathsf{badZ} \wedge \neg \mathsf{badZ}' \big] \ge 1 - 7\exp \big( -\epsilon f k / 3 \big). \]
+    %
+    Notice that $k \mapsto 1 - 7 \exp(-\epsilon f k / 3)$ is increasing in $(0, +\infty)$, and $\lim_{k \rightarrow \infty} 1 - 7 \exp(-\epsilon f k / 3) = 1$, for any $\beta' < 1$ there exists $k$ such that $\Pr[\neg \mathsf{badX} \wedge \neg \mathsf{badX}' \wedge \neg \mathsf{badY} \wedge \neg \mathsf{badZ} \wedge \neg \mathsf{badZ}'] \ge \beta'$.
+
+    We then consider the execution running for \phaseLength rounds.
+    %
+    Without loss of generality, assume $\phaseLength = c \cdot k$ for a constant $c \in \mathbb{N}^+$.
+    %
+    The number of set of at least $k$ consecutive rounds in \phaseLength is $(1/2)(ck - k +2)(ck - k +1) < c^2k^2$.
+    %
+    Hence, the probability that an execution running for $\phaseLength = c \cdot k$ steps and Property (a)(b)(c) holds on any set of $k$ consecutive rounds is lower-bounded by
+    %
+    \[ [1 - 7\exp(-\epsilon f k / 3)]^{c^2 k^2} \ge 1 - 7c^2 k^2 \exp(-\epsilon f k / 3) = 1 - 7\exp(-\epsilon f k / 3 + 2\ln c + 2\ln k). \]
+    %
+    Notice that there exists constant $c$ such that $k \mapsto 1 - 7\exp(-\epsilon f k / 3 + 2\ln c + 2\ln k)$ is increasing in $(c, +\infty)$ and $\lim_{k \rightarrow \infty} 1 - 7\exp(-\epsilon f k / 3 + 2\ln c + 2\ln k) = 1$, for any $\beta < 1$ there exists $k$ such that the probability that an execution running for $\phaseLength = c \cdot k$ steps and Property (a)(b)(c) holds on any set of $k$ consecutive rounds is at least $\beta$.
+
+    Regarding Property (d), the RO queries made by all parties in \phaseLength rounds is $Q = (h + t) \cdot \phaseLength$.
+    %
+    Recall our \mforone PoW construction in~\cref{subsec:parallel-chains}, we consider RO output of length $\polylog \kappa$.
+    %
+    A collision happens with probability $Q^2 / 2^{\polylog \kappa} = \exp(-\Omega(\polylog \kappa + \log \phaseLength))$ which is negligible.
+    %
+    (Note that Property (d) actually holds on an execution of $L = \poly (\kappa)$ steps.)
+\end{proof}
+
+Recall that we run $m = \Theta(\log^2 \kappa)$ chains in parallel using \mforone PoW, and all parallel executions are mutually independent of each other, we show that the above probability on a single execution translates to the fraction of typical executions among $m$ parallel ones.
+
+\theoremtypicalexeuctionparallelchain*
+
+\begin{proof}
+    Fix $\beta < 1$.
+    %
+    We define random variable $Q_i (i \in [m])$ as follows.
+    %
+    If the $i$-th execution among $m$ parallel repetitions, running for a constant number of \phaseLength steps is typical, $Q_i = 1$; otherwise $Q_i = 0$.
+    %
+    Also let $Q = \sum Q_i$.
+    %
+    From~\cref{lemma:typical-execution-single-chain} we learn that there exists protocol parameterizations such that $\forall i \in [m], \Pr[Q_i = 1] = (1 + 2\epsilon)\beta$.
+    %
+    Hence $\EX[Q] = (1 + 2\epsilon)\beta m$.
+    %
+    Since our \mforone PoW construction achieves full independence over all parallel chains, we have
+    %
+    \[ \Pr[Q \le \beta m] < \Pr[Q \le (1 - \epsilon) (1 + 2\epsilon) \beta m] = \Pr[Q \le (1 - \epsilon) \EX[Q]] \le \exp (- \epsilon^2 (1 + 2\epsilon) \beta m). \]
+    %
+    The first inequality holds because $\epsilon < 1/2$, and the last one is due to the Chernoff bounds.
+    %
+    Since $m = \Theta(\log^2 \kappa)$, this probability is negligible in terms of $\kappa$.
+    %
+    I.e., there exist protocol parameterizations such that, with overwhelming probability, at least $\beta$ fraction of the executions are typical.
+\end{proof}

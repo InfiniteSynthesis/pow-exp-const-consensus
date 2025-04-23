@@ -1,0 +1,23 @@
+{
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.fontSize": 12,
+    "latex-workshop.formatting.latex": "latexindent",
+    "editor.rulers": [
+        {
+            "column": 80,
+            "color": "#BB6588"
+        }
+    ],
+    "cSpell.mergeCSpellSettings": false,
+    "cSpell.words": [
+        "Algorand",
+        "bookkeep",
+        "Bracha",
+        "Chernoff",
+        "Merkle",
+        "parameterizations",
+        "permissioned",
+        "permissionless"
+    ],
+    "cSpell.enabled": true
+}

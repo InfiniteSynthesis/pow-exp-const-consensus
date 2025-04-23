@@ -1,0 +1,15 @@
+\section{\emph{Chain-King} Consensus}
+\label{sec:chain-king-consensus}
+
+In this section, we present our permissionless expected-constant-time Byzantine agreement protocol, which we name \chainKingConsensus\footnote{Drawing from the ``Phase King'' approach to solve classical consensus~\cite{FOCS:BerGarPer89}.}.
+%
+We first sketch the basic protocol approach---parallel chains in~\cref{subsec:parallel-chains} and phase-based chain-selection rule in~\cref{subsec:phase-oblivious-agreement}.
+%
+Then, we describe the main protocol in~\cref{subsec:chain-king-consensus}.
+%
+We next show how to adapt the one-shot  protocol execution using sequential composition in order to decide on a series of outputs in~\cref{subsec:fast-sequential-composition}.
+
+\input{content/consensus/parallel-chains}
+\input{content/consensus/phase-oblivious-agreement}
+\input{content/consensus/king-chain-consensus}
+\input{content/consensus/fast-sequential-composition}

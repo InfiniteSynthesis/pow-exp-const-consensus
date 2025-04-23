@@ -1,0 +1,22 @@
+\section{Algorithms Omitted in the Main Body}
+\label{sec:algorithms-omitted}
+
+\paragraph{Chain validation check.}
+%
+The following functions help us simplify the validation process.
+%
+First, we adopt $\mathsf{ValidContent}$ to validate the block content.
+%
+When the input is \IB and $\mathsf{ValidContent}$ extracts its associated block content and returns true only when the block content is a valid type of input in our consensus protocol; when the input is \block, $\mathsf{ValidContent}$ returns true only when the associated block content contains only block headers of input-blocks and other types of valid transactions (we omit the details as it is irrelevant to our consensus protocol).
+
+Next, we use $\mathsf{ValidBlock}^T$ to verify if a (chain-)block is a successful PoW on the $i$-th chain (that is, the nonce $ctr$ is valid and the block hash --- $i$-th segment of the RO output is less than target $T$).
+%
+\[ \mathsf{ValidBlock}^T(\langle ctr, r, h, st, h', val \rangle,i) = \stringSegment{H(\langle ctr, r, h, st, h', val \rangle)}{i}{m} < T \wedge ctr < 2^{32} \]
+%
+Similarly, we use use $\mathsf{ValidInputBlock}^T$ to verify if an input-block is a successful PoW on the $i$-th chain by checking the reverse of the string segment.
+
+Let $\mathsf{isDenseChain}$ denote the a predicate that returns \true iff. a chain \chain is a dense chain.
+%
+Slightly abusing the notations, when $\mathsf{ExtractInputFreshness}$ is called with a single chain \chain we let this denote the fresh randomness for input-blocks extracted from this chain (note that this can be computed without parallel chains).
+
+\input{algorithms/isvalidchain}

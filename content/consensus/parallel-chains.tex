@@ -1,0 +1,126 @@
+\subsection{Parallel Chains and \mforone Proofs of Work}
+\label{subsec:parallel-chains}
+
+We introduce a new approach to achieve full independence of mining on parallel chains while preserving the original simple structure.
+%
+At a high level, our scheme emulates an ideal setting of $m$ parallel oracles while bounding the security loss that such parallel mining incurs.
+%
+More specifically, the protocol will run $m = \Theta(\polylog \kappa)$ parallel chains; note that the number of bits allocated on each chain will still be super-logarithmic in the security parameter (i.e., $\kappa / \Theta(\polylog \kappa)  = \Omega(\polylog \kappa)$), and hence the protocol will allow an arbitrary number of participants.
+%
+Later we will show that (i) poly-logarithmically many parallel chains suffice to achieve the desired convergence; and (ii) poly-logarithmically many bits (those will be the bits available to each of the parallel random oracle invocations) will suffice to eliminate bad events with respect to the random oracle.
+
+\paragraph{Our parallel chain structure.}
+%
+We will use $m = \Theta(\log^2 \kappa)$ parallel chains as the basic building block for \chainKingConsensus.
+%
+Importantly, on each chain we will employ the \twoforone PoW technique~\cite{EC:GarKiaLeo15} to bind the mining process of the chain with input messages (which will be used to reach consensus; details in~\cref{subsec:chain-king-consensus}).
+%
+At a high level, this can be viewed as running $m$ ideal parallel repetitions of a \twoforone PoW blockchain.
+
+We will call the blocks that form the blockchains a \emph{chain-block} (or block for short) and denote it by \block, and the application data field, which will contain consensus-related values, we will call an \emph{input-block}, and denote it by \IB.
+%
+Since the protocol will run an $m$ chain production procedure and $m$ input-block production procedure, we will make a one-to-one correspondence between the chain-blocks and input-blocks.
+%
+More precisely, the input-block produced by the $i$-th segment of the RO output will only be valid on the $i$-th parallel chain.
+%
+See \cref{fig:mx1pow-illustration} for an illustration of the RO output and how successes on the bounded mining procedures are achieved.
+
+\input{figures/mx1-pow}
+
+We now provide details on the blocks' structure.
+%
+Since the mining procedure of chain-blocks and input-blocks are bound together, they share the same block header $\langle ctr, r, h, st, h', val \rangle$, which is a concatenation of random nonce $ctr \in \mathbb{N}$, timestamp $r \in \mathbb{N}$, previous hash reference $h \in \{0, 1\}^\kappa$, block state $st \in \{0, 1\}^*$ (Merkle root of content), input freshness $h' \in \{0, 1\}^\kappa$, and input message $val \in \{0, 1\}^*$.
+%
+Note that the previous hash $h$ is a string of $\kappa$ bits, consisting of $m$ segments of the previous block hash of length $\kappa / m$.
+%
+Block state $st$ is a concatenation of $m$ block states; this is by convention the Merkle tree root of block content whose details we will omit for now (later on we will use \blockify to denote the procedure of generating block states).
+%
+Input freshness $h'$ is a string of $\kappa$ bits and can be extracted from the (local) chain by procedure $\mathsf{ExtractInputFreshness}$.
+%
+We defer the details of this algorithm to~\cref{subsec:phase-oblivious-agreement} and use it in a black-box way here.
+%
+The input value $val$ is the message that is of concern to the consensus protocol.
+%
+For instance, in the case of binary consensus, $val \in \{ 0, 1 \}$ and in multi-valued consensus $val$ is a value picked from a larger input domain.
+%
+Looking ahead, we note that when performing ``slack'' reduction and sequential composition of protocol instances, $val$ may convey additional information (\cref{subsec:fast-sequential-composition}).
+%
+Moreover, we remark that for all parallel chains, parties will try to mine the input-block that contains the \emph{same} input message, hence, unlike $h, st$ and $h'$, in this field all values only need to appear once.
+
+We note that as multiple mining procedures are bound together, for a valid block with respect to a particular chain, those header bits associated with other procedures become ``dummy'' and will only be useful when validating whether the block corresponds to a successful PoW.
+%
+We now provide details about such dummy information.
+%
+Regarding a valid chain-block on the $i$-th chain, only the nonce $ctr$, timestamp $r$, $i$-th segment of previous hash reference \stringSegment{h}{i}{m} and $i$-th segment of block state \stringSegment{st}{i}{m} are useful information.
+%
+All other bits in $h$ and $st$, along with input freshness reference $h'$ and input message $val$ are dummy information and they are merely used in the PoW validation\footnote{We note that later on (\cref{subsec:phase-oblivious-agreement}), after we introduce \emph{phase-based} parallel chains, initial blocks in each phase will have to provide a good fresh randomness $h'$ in order to pass the cross-chain validation check.}
+%
+On a similar vein, for input-blocks that are valid on the $i$-th chain, only the nonce $ctr$, timestamp $r$, input message $val$ and $i$-th segment of fresh randomness \stringSegment{h'}{i}{m} are useful information; all other bits in $h'$, previous hash reference $h$ and block content root $st$ are dummy information.
+
+We are now ready to describe the mining procedure.
+%
+Given a parallel chain \parallelChains, block state $st$ and input $val$, first, the protocol extracts the previous hash reference by concatenating the $i$-th segment of block hash computed from the tip of the $i$-th chain (recall that each segment is a $(\kappa / m)$-bit string).
+%
+(When the chain is empty it refers to the corresponding segment in the CRS.)
+%
+Next, after calling $\mathsf{ExtractInputFreshness}$ on \parallelChains to obtain the input randomness, the protocol queries the random oracle and gets output $u$.
+%
+Then, it divides $u$ into $m$ segments of equal length and iterates over those segments.
+%
+If the original $i$-th segment is less than $T$, the protocol successfully mines a new chain-block on the $i$-th chain and appends it to \parallelChains.
+%
+If the reverse of $i$-th segment is less than $T$, the protocol succeeds in mining an input-block and stores it locally (and will be diffused in the future).
+%
+See~\cref{algorithm:mx1-pow} for a full description of the mining procedure.
+
+\input{algorithms/parallel-pow}
+
+\paragraph{Basic properties of our parallel chain structure.}
+%
+As a warm-up, we present a preliminary analysis of our parallel chain structure.
+%
+The goal is to show that, when appropriately parameterized, a constant fraction of the parallel chains will have ``good'' properties.
+
+Our main analytical approach follows that in \cite{EPRINT:GarKiaLeo14,C:GarKiaLeo17}, where the focus is on whether an execution on a \emph{single} chain is \emph{typical}---i.e., whether random variables related to the execution on this single chain stays close to their expected values and bad events with respect to the RO never happen.
+%
+In~\cite{EPRINT:GarKiaLeo14} it is proved that any execution of the protocol for a number of rounds at least polylogarithmic in the security parameter, is \emph{typical} with overwhelming probability.
+
+Here we apply the above technique to a \emph{constant} number of rounds and adapt it to our setting where the mining procedure of chain-blocks and input-blocks are bound together.
+%
+Importantly, we are interested in the random variables expressing the total number of rounds that \emph{at least} one honest chain-block (resp., input-block) is produced, the total number of rounds that \emph{exactly} one honest chain-block is produced, and the total number of adversarial successes on chain-blocks (resp., input-blocks).
+%
+For the sake of conciseness, here we provide an informal description of typical executions and defer all full definitions and proofs to~\cref{subsec:typical-exeuction-parallel-chains}.
+
+\begin{definition}
+    [Typical execution, informal]
+    \label{def:typical-informal}
+
+    An execution is \emph{typical} if for any set of at least $k$ consecutive rounds,  bad events (collisions) on the RO never happen, and the following quantities stay close to their expected values:
+    %
+    \begin{enumerate}[label=(\alph*), leftmargin=*, nosep]
+        \item the number of rounds where \emph{at least} one honest chain-block (resp., input-block) is produced;
+        \item the number of rounds where \emph{exactly} one honest chain-block is produced;
+        \item the number of adversarial chain-blocks (resp., input-blocks).
+    \end{enumerate}
+\end{definition}
+
+Note that since in our case $k$ is a constant, the probability that in a $k$-round window the execution is typical is constant due to Chernoff bounds (\cref{thm:chernoff-bounds}).
+%
+Hence, the probability that an execution running for $L = \poly(\kappa)$ rounds is typical will be negligible.
+%
+Nonetheless, let us consider a constant number $\phaseLength \in \mathbb{N}^+$ of rounds.
+%
+When the protocol is appropriately parameterized, the execution running for \phaseLength steps will be typical with constant probability.
+%
+The intuition here is that, the number of windows of at least $k$ rounds within the period of \phaseLength rounds is $\Theta(\phaseLength^2)$.
+%
+For any constant $\beta < 1$, when the probability that a $k$-round time window is typical is $\alpha$, then by choosing $\phaseLength \le \sqrt{\ln \beta / \ln \alpha}$ we get the desired convergence probability.
+%
+Moreover, for the same $\beta$, \phaseLength can be chosen as an arbitrary multiple of $k$ (see~\cref{subsec:typical-exeuction-parallel-chains} for details).
+
+Given the full independence of the $m$ mining processes, we show that when the number of $m$ parallel chains is sufficiently large, the success probability of a single execution being typical translates to the \emph{fraction} of typical executions among the $m$ parallel executions, yielding the following:
+
+\begin{restatable}{theorem}{theoremtypicalexeuctionparallelchain}
+    \label{thm:typical-execution-parallel-chain}
+    For any $\beta < 1$, running $m = \Theta(\log^2 \kappa)$ parallel chains as described above for a constant number \phaseLength of rounds, results in at least a $\beta$ fraction of them being typical with overwhelming probability in $\kappa$.
+\end{restatable}

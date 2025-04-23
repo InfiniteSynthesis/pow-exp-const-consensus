@@ -1,0 +1,47 @@
+\begin{figure}[ht] \centering
+    \begin{tikzpicture} \color{kanade}
+        \node[black] (segment1) {$000000 \cdots 101110$};
+        \node[anchor=west,black] at (segment1.east) (segment2) {$011000 \cdots 001011$};
+        \node[anchor=west,black] at (segment2.east) (segment3) {$\cdots\cdots$};
+        \node[anchor=west,black] at (segment3.east) (segment4) {$000000 \cdots 000000$};
+        \node[anchor=west,black] at (segment4.east) (segment5) {$010111 \cdots 000000$};
+
+        \begin{scope}[on background layer]
+            \node[fit = (segment1) (segment5), fill = kanade!10, rectangle, rounded corners, inner sep = 3pt] (output) {};
+        \end{scope}
+
+        \draw[thick,dashed] ([yshift = -5pt]segment2.south west) -- ([yshift = 15pt]segment2.north west);
+        \draw[thick,dashed] ([yshift = -5pt]segment2.south east) -- ([yshift = 15pt]segment2.north east);
+        \draw[thick,dashed] ([yshift = -5pt]segment4.south west) -- ([yshift = 15pt]segment4.north west);
+        \draw[thick,dashed] ([yshift = -5pt]segment4.south east) -- ([yshift = 15pt]segment4.north east);
+
+        \node[anchor=south] at (segment1.north) (segment1bits) {$\kappa / m$};
+        \draw[thick,->] (segment1bits.west) -- ([xshift = -25pt]segment1bits.west);
+        \draw[thick,->] (segment1bits.east) -- ([xshift = 25pt]segment1bits.east);
+        \node[anchor=south] at (segment2.north) (segment2bits) {$\kappa / m$};
+        \draw[thick,->] (segment2bits.west) -- ([xshift = -25pt]segment2bits.west);
+        \draw[thick,->] (segment2bits.east) -- ([xshift = 25pt]segment2bits.east);
+        \node[anchor=south] at (segment4.north) (segment4bits) {$\kappa / m$};
+        \draw[thick,->] (segment4bits.west) -- ([xshift = -25pt]segment4bits.west);
+        \draw[thick,->] (segment4bits.east) -- ([xshift = 25pt]segment4bits.east);
+        \node[anchor=south] at (segment5.north) (segment5bits) {$\kappa / m$};
+        \draw[thick,->] (segment5bits.west) -- ([xshift = -25pt]segment5bits.west);
+        \draw[thick,->] (segment5bits.east) -- ([xshift = 25pt]segment5bits.east);
+
+        \node[anchor=south] at ([yshift=15pt]segment3.north) (allbits) {$\kappa$};
+        \draw[thick,->] (allbits.west) -- ([xshift = -186pt]allbits.west);
+        \draw[thick,->] (allbits.east) -- ([xshift = 186pt]allbits.east);
+
+        \node[rectangle, fill = kanade!10, anchor=north] at ([xshift = -25pt, yshift=-25pt]segment1.south) (block1) {$\block^1$};
+        \draw[thick,->] ([xshift = -25pt, yshift = -5pt]segment1.south) -- ([xshift = -25pt, yshift=-25pt]segment1.south);
+        \node[rectangle, fill = kanade!10, anchor=north] at ([xshift = -25pt, yshift=-25pt]segment4.south) (block2) {$\block^{m - 1}$};
+        \draw[thick,->] ([xshift = -25pt, yshift = -5pt]segment4.south) -- ([xshift = -25pt, yshift=-25pt]segment4.south);
+        \node[rectangle, fill = kanade!10, anchor=north] at ([xshift = 25pt, yshift=-25pt]segment4.south) (block3) {$\IB^{m - 1}$};
+        \draw[thick,->] ([xshift = 25pt, yshift = -5pt]segment4.south) -- ([xshift = 25pt, yshift=-25pt]segment4.south);
+        \node[rectangle, fill = kanade!10, anchor=north] at ([xshift = 25pt, yshift=-25pt]segment5.south) (block4) {$\IB^m$};
+        \draw[thick,->] ([xshift = 25pt, yshift = -5pt]segment5.south) -- ([xshift = 25pt, yshift=-25pt]segment5.south);
+    \end{tikzpicture}
+    
+    \caption{The mining process on our parallel chain. We assume that the target value is appropriately set so that at least 6 leading zeroes imply a success of the chain's block mining and at least 6 tailing zeroes blocks implies a success of the input mining. The blocks' superscript denotes on which chain they will be valid.}
+    \label{fig:mx1pow-illustration}
+\end{figure}

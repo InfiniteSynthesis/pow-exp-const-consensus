@@ -1,0 +1,28 @@
+\begin{cccAlgorithm}
+    {$\mathsf{ExtractPhaseVector}(\parallelChains, r, tp)$}
+    {extract-phase-vector}
+    {Extract phase output as a vector.}
+
+    \begin{algorithmic}[1]
+        \oneLineIf{$r < tp \cdot \phaseLength$}{\Return $\bot$}
+        \Comment{Too early to extract target phase.}
+        
+        \State{Initialize $\vec{V}$ to an empty array}
+        
+        \For{$i = 1$ \textbf{to} $m$}
+        
+        \State{Initialize $\vec{M}$ to an empty array}
+        
+        \State{$\chain \gets \parallelChainsIdx{tp}_i$}
+        
+        \For{$\block \in \chain $ \textbf{and} $tp \cdot \phaseLength - (\phaseOutputLength + \phaseRefLength) < \timestamp{\block} \le tp \cdot \phaseLength - \phaseRefLength$}
+        \State{Extract input message $val$ from \block and add $val$ to $\vec{M}$}
+        \EndFor
+        
+        \State{Sort $\vec{M}$ then add $\med(\vec{M})$ to $\vec{V}$}
+        
+        \EndFor
+        
+        \State{\Return $\vec{V}$}
+    \end{algorithmic}
+\end{cccAlgorithm}

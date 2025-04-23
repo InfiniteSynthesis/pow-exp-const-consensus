@@ -1,0 +1,33 @@
+\begin{cccAlgorithm}
+    {$\mathsf{ExtractInputFreshness}(\parallelChains, r)$}
+    {extract-input-freshness}
+    {Extract the input freshness given current parallel chains \parallelChains and round $r$.}
+
+    \begin{algorithmic}[1]
+        \oneLineIf{$r \le \phaseViewLength$}{\Return $0^\kappa$} \Comment{First phase}
+        
+        \oneLineIf{$r \mod \phaseLength > \phaseLength - \phaseRefLength$}{\Return $0^\kappa$} \Comment{Reference convergence stage}
+        
+        \State{$h' \gets \varepsilon, i \gets \lceil r / \phaseLength \rceil$}
+        
+        \If{$r \mod \phaseLength \le \phaseViewLength$} \Comment{Get cross-chain reference}
+        
+        \For{$j$ \textbf{from} 1 \textbf{to} $m$}
+        \State{$\chain \gets \parallelChainsIdx{i - 1}_j$ and $\block \gets \chainHead{\chainPrefix{\chain}{\phaseRefLength}}$} \Comment{Extract chain in previous phase}
+        \State{$h' \gets h' \concat \stringSegment{H(\block)}{j}{m}$}
+        \EndFor
+        
+        \Else \Comment{Get input freshness for \IB}
+        
+        \State{$r^* \gets (i - 1) \cdot \phaseLength + \phaseViewLength - k$} \Comment{$k$ rounds before the end of view convergence.}
+        
+        \For{$j$ \textbf{from} 1 \textbf{to} $m$}
+        \State{$\chain \gets \parallelChainsIdx{i}_j$ and let \block be the block in \chain with largest block height and $\timestamp{\block} < r^*$}
+        \State{$h' \gets h' \concat \stringSegment{H(\block)}{j}{m}$}
+        \EndFor
+        
+        \EndIf
+        
+        \State{\Return $h'$}
+    \end{algorithmic}
+\end{cccAlgorithm}

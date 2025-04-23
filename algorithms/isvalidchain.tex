@@ -1,0 +1,97 @@
+\begin{cccAlgorithm}
+    {$\mathsf{IsValidChain}(\parallelChains, denseChains, r)$}
+    {isvalidchain}
+    {The chain validation procedure.}
+
+    \newcommand{\goodHash}{\mathEnv{\mathsf{goodHash}}}
+    \newcommand{\goodNonce}{\mathEnv{\mathsf{goodNonce}}}
+    \newcommand{\goodTime}{\mathEnv{\mathsf{goodTime}}}
+    \newcommand{\goodContent}{\mathEnv{\mathsf{goodContent}}}
+    \newcommand{\goodRef}{\mathEnv{\mathsf{goodRef}}}
+
+    \begin{algorithmWithNumbering}{isValidChainCounter}
+        \LineComment{This algorithm has five internal Boolean variables \goodHash, \goodNonce, \goodTime, \goodContent and \goodRef, all initialized as \true.}
+
+        \For{$i$ \textbf{from} $1$ \textbf{to} \phase}
+        \For{$j$ \textbf{from} $1$ \textbf{to} $m$}
+
+        \State{Call $\mathsf{chainValidation}(\parallelChains, denseChains, r, i, j, \parallelChainsIdx{i}_j)$}
+
+        \For{$\chain \in denseChains[i][j]$}
+        \State{Call $\mathsf{chainValidation}(\parallelChains, denseChains, r, i, j, \chain)$}
+        \oneLineIf{\textbf{not} $\mathsf{isDenseChain}(\chain)$}{$\goodRef \gets \false$}
+        \EndFor
+
+        \EndFor
+        \EndFor
+
+        \State{\Return $\goodHash \wedge \goodNonce \wedge \goodTime \wedge \goodContent \wedge \goodRef$}
+    \end{algorithmWithNumbering}
+
+    \medskip
+
+    \begin{algorithmWithNumbering}{isValidChainCounter}
+        \Statex{\underline{\textbf{Procedure} $\mathsf{chainValidation}(\parallelChains, denseChains, r, phase, chain, \chain)$}}
+        
+        \State{$r^* \gets \min \{r, phase \cdot \phaseLength \}$}
+        
+        \For{$k$ \textbf{from} $\chainLength{\chain}$ \textbf{to} $1$}
+        
+        \State{Parse $\chain_k$ as $\block = \langle ctr, r, h, st, h', val \rangle$}
+        
+        \If{$k > 1$}
+        \State{Parse $\chain_{k - 1}$ as $\block^*$}
+        \oneLineIf{$\stringSegment{h}{chain}{m} \neq \stringSegment{H(\block^*)}{chain}{m}$}{$\goodHash \gets \false$}
+        \ElsIf{$\phase = 1$}
+        \oneLineIf{$h \neq 0^{\kappa}$}{$\goodHash \gets \false$}
+        \EndIf
+
+        \oneLineIf{\textbf{not} $\mathsf{ValidBlock}^T(\block, j)$}{$\goodNonce \gets \false$}
+        
+        \oneLineIf{\textbf{not }$(phase - 1)\phaseLength < \timestamp{\block} < r^*$}{$\goodTime \gets \false$}
+        
+        \oneLineIf{\textbf{not} $\mathsf{ValidContent}(\block)$}{$\goodContent \gets \false$}
+        
+        \State{Run $\mathsf{IsValidInputBlocks}(\block, \chain, phase, chain)$}
+        \State{$r^* \gets \timestamp{\block}$}
+
+        \If{$phase > 1$}
+        \Comment{Check cross-chain reference}
+        
+        \State{$denseCnt \gets 0$}
+        \For{$q$ \textbf{from} $1$ \textbf{to} $m$}
+        \State{Parse $\chain = \parallelChainsIdx{phase - 1}_{chain}$}
+        \If{$\stringSegment{\chainHead{\chainPrefix{\chain}{\phaseRefLength}}}{q}{m} = \stringSegment{h'}{q}{m}$ \textbf{and} $\mathsf{isDenseChain}(\chain)$}
+        \State{$denseCnt \gets denseCnt + 1$}
+        \EndIf
+        \If{$\exists \chain' \in denseChains[phase][chain]$ \textbf{and}$ \stringSegment{\chainHead{\chainPrefix{\chain'}{\phaseRefLength}}}{q}{m} = \stringSegment{h'}{q}{m}$}
+        \State{$denseCnt \gets denseCnt + 1$}
+        \EndIf
+        \EndFor
+        
+        \oneLineIf{$denseCnt < \beta \cdot m$}{$\goodRef \gets \false$}
+        
+        \EndIf
+        
+        \EndFor
+    \end{algorithmWithNumbering}
+
+    \medskip
+
+    \begin{algorithmWithNumbering}{isValidChainCounter}
+        \Statex{\underline{\textbf{Procedure} $\mathsf{IsValidInputBlocks}(\block, \chain, phase, chain)$}}
+        
+        \For{each $\IB = \langle ctr, r, aux, h', val \rangle \in \block$}
+        
+        \If{$\exists \IB' \in \block' \in \chain$ \textbf{and} $\stringSegmentRev{H(\IB')}{chain}{m} = \stringSegmentRev{H(\IB)}{chain}{m}$}
+        \State{$\goodHash \gets \false$}
+        \EndIf
+        \oneLineIf{\textbf{not} $\mathsf{ValidInputBlock}^T(\IB, chain)$}{$\goodNonce \gets \false$}
+        \oneLineIf{\textbf{not} $(phase - 1) \phaseLength <r < \timestamp{\block}$}{$\goodTime \gets \false$}
+        \oneLineIf{\textbf{not} $\mathsf{ValidContent}(\IB)$}{$\goodContent \gets \false$}
+        \State{$h^* = \mathsf{ExtractInputFreshness}(\chain)$}
+        \oneLineIf{$\stringSegment{h'}{chain}{m} \neq \stringSegment{h^*}{chain}{m}$}{$\goodRef \gets \false$}
+        
+        \EndFor
+    \end{algorithmWithNumbering}
+\end{cccAlgorithm}

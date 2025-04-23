@@ -1,0 +1,261 @@
+\subsection{From Phase Oblivious Agreement to Chain-King Consensus}
+\label{subsec:chain-king-consensus}
+
+In this section we explain how our chain-king consensus protocol can be derived from phase-based parallel chains.
+%
+We present \chainKingConsensus as a multi-valued consensus protocol with input domain $V, |V| \geq 2$.\footnote{We remark that our protocol is a multi-valued consensus protocol directly by construction, rather than following the common approach of first designing a binary consensus protocol and then applying the Turpin-Coan pre-processing step~\cite{InfProcessLett:TurCoa84}.}
+%
+For simplicity we assume inputs are scalars, but the formulation can be easily adapted to any other type of input.
+
+At a high-level chain-king consensus can be viewed as following the ``phase king'' approach (cf.~\cite{ALP:BerGar89,FOCS:BerGarPer89}) with randomized king selection on top of phase-based parallel chains.
+%
+The execution is based on the iteration of 3 phases.
+%
+Parties will only terminate at the end of each iteration (i.e., the phase with index a multiple of 3).
+%
+Two thresholds, more than one half of the number of chains $( > m / 2)$ and more than three-quarters $( > 3m / 4)$, are of interest.
+%
+Importantly, a distinguished chain---the \emph{first} chain $\parallelChains_1$---is identified as the \emph{king chain}.
+%
+This king chain is hard-coded in the protocol and will never change during the whole execution.
+
+Similarly to all existing consensus protocols with probabilistic termination, in \chainKingConsensus parties might terminate at different phases.
+%
+We measure the quality of non-simultaneous termination by measuring the maximum number of phases that two honest parties can terminate apart from each other:
+
+\begin{definition}[$c$-slack termination] \label{def:slack-termination}
+    A protocol $\Pi$ satisfies $c$-slack termination if any pair of honest parties $\party, \party'$ are guaranteed to terminate $\Pi$ within $c$ phases of each other.
+\end{definition}
+
+\paragraph{Input messages and internal variables.}
+%
+So far we have not yet specified the input messages in each phase.
+%
+In (multi-valued) \chainKingConsensus, at the onset of the protocol execution, party \party is activated with an input $v \in V$.
+%
+\party starts to mine input messages (i.e., by setting a variable $\val$ in the RO query---see~\cref{subsec:parallel-chains}) which is their current suggestion for the protocol output; \party will terminate based on her local states which we will detail soon.
+
+In addition to variable $\val \in V$, \party locally manages two Boolean variables \lock and \decide which are both initialized to \false, and a three-valued variable $\exit \in \{\infty, 1, 0\}$ which is initialized to $\infty$.
+%
+In more detail:
+
+\begin{cccItemize}[noitemsep]
+    \item Variable \val reflects \party's suggestion on the output, and can be modified if in certain phases \party receives sufficiently many different input values.
+
+    \item Value \lock indicates whether \party will ``listen'' to the king-chain (see~\cref{algorithm:update-state} below for details) in the last phase of an iteration.
+    %
+    It is set to \true if parties are confident that all honest parties will set their \val to the same value.
+    %
+    If \lock remains \false at the end of an iteration, \party will update her \val based on her local view of the king-chain.
+    %
+    If \party has not decided at the end of an iteration and \lock is set to \true, it is reset to \false for the next iteration.
+
+    \item Variable \decide is used to record whether \party decides on her local value \val.
+    %
+    It is set to \true only when \party is confident that all honest parties are going to agree on the value that she holds, and the adversary is limited to only influencing in which phase parties will terminate.
+    %
+    When \decide is set to \true, \val is fixed and will never change in the future (except with negligible probability).
+    %
+    Further, it is set to \true only in the first and second phase of an iteration and is checked at the last phase to see if \exit needs to be updated.
+
+    \item Variable \exit indicates whether \party should stop querying the RO and producing blocks.
+    %
+    When $\exit = \infty$, \party has not yet reached the end of the iteration when she decides, hence \party keeps updating the other variables.
+    %
+    When $\exit = 1$, \party have set \decide to \true and hence is ready to output \val.
+    %
+    However, \party is not aware if other honest parties have decided, hence \party keeps producing blocks with \val.
+    %
+    This will last for one iteration and then \exit is set to $0$.
+    %
+    When $\exit = 0$, \party stops making RO queries and stops the execution of (this instance of the) protocol.
+\end{cccItemize}
+
+We highlight one significant difference between Chain-King Consensus and classical BA protocols.
+%
+In the classical setting, parties terminate the protocol once they decide on an output.
+%
+For protocols with probabilistic termination, some honest parties might terminate a few rounds after other honest parties (cf.~\cite{JACM:DolReiStr90}).
+%
+Parties who have terminated continue to send the same message to all honest parties (cf.~\cite{STOC:FelMic88,C:KatKoo06}), and the parties that are behind can stick to the previous message if they do not receive any new message from those parties that have already terminated.
+%
+As it turns out, this strategy essentially relies on the set of participating parties being known, which does not apply the permissionless setting where parties can neither authenticate with each other nor know the source of a message.
+%
+Hence, in order to let parties that are behind safely terminate, we explicitly distinguish ``\decide,'' which means parties output their local variable \val, and ``\exit,'' which means parties stop (or will stop) the PoW mining process and exit the protocol.
+%
+We provide more details on ``mining for one more iteration'' after we introduce the state update algorithm.
+
+\paragraph{Phase output extraction.}
+%
+The decision made at the end of each phase is based on the input messages collected in that phase.
+%
+Since we have $m$ parallel chains, parties will extract a vector of size $m$.
+%
+For the $i$-th element in the vector, it is extracted from the \emph{median}\footnote{We note that selecting the median as output is not the only available solution to extract the phase's output. For strong consensus we can extract the plurality (see~\cref{remark:strong-validity}), and for state machine replication we introduce a more refined way to extract output from the king chain (details in~\cref{sec:fast-state-machine-replication}).} of input values that appear in the input-blocks, collected in the output generation stage (i.e., blocks with timestamps in $(i \phaseLength - (\phaseOutputLength + \phaseRefLength), i \phaseLength  - \phaseRefLength]$ in $i$-th phase).
+%
+Note that since parties might disagree on some bounded fraction of the chains, different honest parties will extract different phase output vectors.
+%
+Nevertheless, thanks to~\cref{thm:phase-oblivious-agreement}, two honest output vectors will share a large fraction of common elements obliviously.
+%
+(See~\cref{algorithm:extract-phase-vector} for the full description of this process.)
+
+\input{algorithms/extract-phase-vector}
+
+\paragraph{State update algorithm.}
+%
+At the end of each phase (i.e., when local clocks reach round $i \cdot \phaseLength$), parties run \cref{algorithm:update-state} to decide whether to update their local variables or not.
+%
+It generally follows the randomized phase-king algorithm approach~\cite{PODC:FitGar03}, but introduces a novel king selection rule and an extra termination iteration.
+
+\input{algorithms/state-update}
+
+We now provide a high-level overview and some intuition about
+the state update algorithm.
+%
+In the first phase of an iteration, given phase output vector $\vec{V}$, parties first check if more than $m / 2$ chains report the same value $val$.
+%
+If this is the case, they set their \val to $val$.
+%
+Since more than $m / 2$ accounts for the majority of the chains, if there exists such value $val$ then it will be unique.
+%
+Further, if in their local view, more than $3m / 4$ of the chains report $val$, they set both \decide and \lock to \true and they will decide at the end of iteration.
+%
+The second phase is almost a repetition of the first one except that in this phase parties will not set \decide to \true.
+
+If during the first two phases in an iteration, a party \party has never seen more than $3m / 4$ of the chains report the same value, \party is still ``confused'' and its internal variable \lock remains \false at the end of the last phase.
+%
+Under such circumstance, \party will refer to the king chain and adopt the median value among the input-messages included---i.e., the first element in phase vector $\vec{V}$.
+%
+Note that this is different from previous phase-king style constructions, where with deterministic termination, king rotates among $t + 1$ fixed parties (where at least one of them is honest) \cite{ALP:BerGar89,FOCS:BerGarPer89}, while with probabilistic termination, parties first broadcast their \val and then run an oblivious leader election algorithm to try to agree on an honest king with constant probability \cite{C:KatKoo06}.
+%
+In contrast, in our protocol the chain-king is \emph{always} the first chain.
+%
+Moreover, even though the adversary knows that the first chain is the king, he will not be able to focus on it due to the basic nature of parallel chains.
+%
+As a result, given that the adversary's power is ``diluted,'' parties agree obliviously with constant probability on the king-chain's value.
+%
+When the honest parties get lucky, they will start the beginning of the next iteration with a unanimous value in \val, which guarantees decision; if they do not, they will start the next iteration with a different \val and they can hope for getting lucky with the next king chain.
+
+Next, we elaborate on the difference between \decide and \exit as well as their interaction.
+%
+As we mentioned earlier, even if parties have decided, they should still participate in the protocol by keeping making RO queries and diffusing blocks with their output value.
+%
+This is because due to non-simultaneous termination, if parties decide in the current iteration stop from participating in the protocol, then parties that are going to decide in the next iteration would not be able to get enough information since the honest majority condition might be broken.
+%
+In the classical setting, this is easily circumvented by honest parties who do not receive a message from other parties, reusing their previous message as the current input (cf.~\cite{STOC:FelMic88,C:KatKoo06}).
+%
+However, in a PoW setting the above strategy is not feasible.
+%
+Therefore we distinguish the termination of deciding output and mining blocks by using two different variables \decide and \exit.
+%
+Specifically, for any party that decides the output in $i$-th phase, it should first keep mining for an extra iteration (by setting \exit to $1$ and no longer update \val, \lock and \decide), and then terminate and set \exit to $0$ at the $(i + 3)$-th phase (recall that an iteration consists of 3 phases).\footnote{As we show later on in~\cref{subsec:fast-sequential-composition}, this termination gap can be reduced to 1 phase by emulating so-called ``Bracha termination.''}
+%
+After parties set \exit to $0$, they output \val and exit the protocol.
+
+\paragraph{The \chainKingConsensus protocol.}
+%
+Having presented the various protocol components, we are now ready to put things together and state what the protocol achieves.
+%
+During the protocol execution, parties keep updating their local parallel chains and mining their output suggestion.
+%
+At the end of each phase, they use $\mathsf{StateUpdate}$ to update their consensus-related internal variables.
+%
+Upon setting their \exit variable to 0, parties terminate the protocol and output \val.
+
+\input{protocols/chain-king-consensus}
+
+\chainKingConsensus achieves agreement and validity in an expected-constant number of rounds, and since parties terminate at the end of neighboring phases, it satisfies 3-slack termination (cf.~\cref{def:slack-termination}).
+%
+Further, when parties start the protocol with a unanimous input configuration, then they decide at the end of the third phase (except with negligible probability).
+%
+If they do not start with an unanimous input, then the expected time for decision is $3 / (3/4) + 3 = 7$ phases.
+
+\begin{theorem} \label{thm:chain-king-consensus}
+    There exist protocol parameterizations such that \chainKingConsensus satisfies agreement, validity and 3-slack termination with expected-constant round complexity.
+\end{theorem}
+
+
+\begin{proof}
+    First, we consider the properties of the $\mathsf{StateUpdate}$ algorithm.
+
+    \begin{claim} \label{claim:state-update-properties}
+        There exist protocol parameterizations such that \cref{algorithm:update-state} satisfies the following properties.
+        %
+        \begin{enumerate}[label=(\alph*),leftmargin=*,nosep]
+            \item If at the onset of an iteration, honest parties start unanimously with $v$, then at the end of the second phase in that iteration, all honest parties set $\val = val, \lock = \true$ and $\decide = \true$.
+            
+            \item If an honest party \party sets $\decide = \true$ and $\val = v$ in an iteration, then all honest parties set $\lock = \true$ and $\val = v$ at the end of the second phase in that iteration.
+            
+            \item  If an honest party \party sets $\lock = \true$ and $\val = v$ in an iteration, then all honest parties set $\val = v$ at the end of the second phase in that iteration.
+        \end{enumerate}
+    \end{claim}
+
+    \begin{proof}
+        Suppose \chainKingConsensus is well parameterized such that in any phase, it achieves phase oblivious agreement on at least $(3m / 4 + 1)$ chains.
+
+        Regarding Property (a), since honest parties start unanimously with $v$, by~\cref{thm:phase-oblivious-agreement}, they reach oblivious agreement on at least $(3m / 4 + 1)$ chains and the majority of the input-blocks are honest hence report the same $v$.
+        %
+        I.e., for any honest party \party, at least $(3m / 4 + 1)$ elements in her phase vector $\vec{V}$ are $v$.
+        %
+        Hence \party remains \val as $v$ and set both $\lock, \decide$ as \true at the end of the first phase.
+        %
+        Similarly, for the second phase \party sees at least $(3m / 4 + 1)$ elements in her phase vector $\vec{V}$ are $v$ so \val remains unchanged.
+
+        For Property (b), if there exists an honest party \party setting \decide to \true in the first phase, then in \party's local view at least $(3m / 4 + 1)$ chains output the same value $v$.
+        %
+        \cref{thm:phase-oblivious-agreement} implies that parties will disagree on at most $m / 4$ chains, hence in all other honest parties' local view they see at least $(m / 2)$ chains outputting $v$.
+        %
+        I.e., all honest parties set their \val to $v$ at the end of the first phase.
+        %
+        In the second phase, since all parties hold the same value, they see that at least $(3m / 4 + 1)$ elements in their phase vector $\vec{V}$ are $v$.
+        %
+        Therefore, all honest parties set \lock to \true and \val to $v$ at the end of the second phase.
+
+        Then we consider Property (c).
+        %
+        Since there exists an honest party \party setting \lock to \true and \val to $v$, similar to the arguments in Property (b) we learn that all honest parties will set their \val to $v$ at the end of that phase.
+        %
+        Note that if this is the first phase, then in the second phase they start unanimously so parties will not update their \val.
+    \end{proof}
+
+    Validity directly follows Property (a).
+
+    Regarding agreement, when parties start with different values at the on set of an iteration, either some parties set \decide to \true and \val to $v$ or none of them update \decide.
+    %
+    In the first case, Property (b) implies that all of them set $\lock = \true$ and $\val = v$ so none of the honest party update their value based on the king chain.
+    %
+    Hence they start unanimously in the next iteration and since parties that have decided will continue to produce PoWs for one more iteration, all honest parties will set \decide to \true and \val to $v$ in the next iteration.
+    %
+    In the second case, note that either some parties have set their \lock to \true or none of the honest parties has updated \lock.
+    %
+    If there exists at least one honest party who set her \lock to \true and \val to $v$, then based on Property (c) all honest parties hold $\val = v$.
+    %
+    Then, in the third phase, if the execution on king chain is typical, \val remains as $v$ for all honest parties and they start unanimously in the next iteration which guarantees agreement in the next iteration.
+    %
+    Otherwise (also the same for none of the honest parties has updated \lock), parties start the next iteration with different values and the same argument applies.
+
+    The argument for agreement directly implies that honest parties can terminate at most 3 phases apart from each other.
+    %
+    We now show that round complexity of \chainKingConsensus is expected-constant.
+    %
+    \cref{lemma:typical-execution-single-chain} implies that the protocol parameterization guarantees that the execution on the king chain is typical with probability at least $3 / 4$.
+    %
+    I.e., if none of the honest parties decide in an iteration, the probability that all parties start unanimously in the next iteration is at least $3 / 4$.
+    %
+    Hence, the number of iterations that parties will all terminate follows the geometric distribution and the expected number of phases is $3 / (3 / 4) + 3 = 7$.
+\end{proof}
+
+
+\begin{remark} \label{remark:strong-validity}
+    \chainKingConsensus also achieves ``strong validity'' (i.e., that the output equals the input of at least one honest party) if (i) we change the phase output extraction (\cref{algorithm:extract-phase-vector}) from selecting the median of input-messages to the input-message with the highest plurality; and (ii) the adversarial computational power is bounded by $t < (1 - \delta) n / (|V| - 1)$.
+    %
+    (This matches the lower bound in~\cite{PODC:FitGar03}.)
+\end{remark}
+
+\begin{remark} \label{remark:crusader-agreement}
+    We note that PoW-based {\em Crusader Agreement}~\cite{JA:Dolev82} (where parties either output the same value $v$ or $\bot$, and if they start unanimously they output that value) can be achieved in constant time.
+    %
+    Specifically, parties run \chainKingConsensus and terminate at the end of first phase.
+    %
+    If a party \party sets her \decide variable to \true, \party outputs \val; otherwise she outputs $\bot$.
+\end{remark}

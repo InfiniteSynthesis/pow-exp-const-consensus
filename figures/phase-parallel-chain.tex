@@ -1,0 +1,102 @@
+\begin{figure}[ht] \centering
+    \begin{tikzpicture} \color{kanade}
+        \node (genesis) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 30pt, yshift = 20pt]genesis.east) (block11) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 25pt]block11.east) (block12) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 48pt]block11.east) (block13) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 67pt]block11.east) (block14) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 100pt]block11.east) (block15) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 119pt]block11.east) (block16) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 152pt]block11.east) (block17) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 164pt]block11.east) (block18) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 192pt]block11.east) (block19) {};
+        \draw[->, black] (block11) [bend right]to ([yshift = 5pt]genesis);
+        \draw[kanade!50] (block11) -- (block19);
+
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 30pt]genesis.east) (block21) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 13pt]block21.east) (block22) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 50pt]block21.east) (block23) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 83pt]block21.east) (block24) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 121pt]block21.east) (block26) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 150pt]block21.east) (block28) {};
+        \draw[->, black] (block21) [bend right = 10]to ([yshift = 5pt]genesis);
+        \draw[kanade!50] (block21) -- (block28);
+
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 30pt, yshift = -20pt]genesis.east) (block31) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 22pt]block31.east) (block32) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 44pt]block31.east) (block33) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 76pt]block31.east) (block34) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 96pt]block31.east) (block25) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 123pt]block31.east) (block36) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 151pt]block31.east) (block37) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 165pt]block31.east) (block38) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 181pt]block31.east) (block39) {};
+        \draw[->, black] (block31) [bend right]to ([yshift = 5pt]genesis);
+        \draw[kanade!50] (block31) -- (block39);
+
+        \draw[black,dashed] ([xshift = -15pt, yshift = 50pt]block11.east) -- ([xshift = -15pt, yshift = -10pt]block31.east);
+
+        \node[black, anchor = south] at ([xshift = 25pt, yshift = 10pt]block11.east) (vc) {\footnotesize  view convergence};
+        \node[black, anchor = south] at (vc.north) (vcl) {\footnotesize  \phaseViewLength};
+        \draw[black,->] (vcl.west) -- ([xshift = -20pt]vcl.west);
+        \draw[black,->] (vcl.east) -- ([xshift = 20pt]vcl.east);
+
+
+        \draw[black, dashed] ([xshift = 65pt, yshift = 35pt]block11.east) -- ([xshift = 65pt, yshift = -10pt]block31.east);
+
+        \node[black, anchor = south] at ([xshift = 105pt, yshift = 10pt]block11.east) (og) {\footnotesize output generation};
+        \node[black, anchor = south] at (og.north) (ogl) {\footnotesize \phaseOutputLength};
+        \draw[black,->] (ogl.west) -- ([xshift = -20pt]ogl.west);
+        \draw[black,->] (ogl.east) -- ([xshift = 20pt]ogl.east);
+
+        \draw[black, dashed] ([xshift = 145pt, yshift = 35pt]block11.east) -- ([xshift = 145pt, yshift = -10pt]block31.east);
+
+        \node[black, anchor = south] at ([xshift = 180pt, yshift = 10pt]block11.east) (rc) {\footnotesize  ref. convergence};
+        \node[black, anchor = south] at (rc.north) (rcl) {\footnotesize  \phaseRefLength};
+        \draw[black,->] (rcl.west) -- ([xshift = -20pt]rcl.west);
+        \draw[black,->] (rcl.east) -- ([xshift = 20pt]rcl.east);
+
+        \draw[black, dashed] ([xshift = 215pt, yshift = 50pt]block11.east) -- ([xshift = 215pt, yshift = -10pt]block31.east);
+
+        \node[black, anchor = south] at (ogl.north) (phase1) {\footnotesize  Phase $i$ $(\phaseLength$ rounds)};
+        \draw[black,->] (phase1.west) -- ([xshift = -72pt]phase1.west);
+        \draw[black,->] (phase1.east) -- ([xshift = 64pt]phase1.east);
+
+        \node[anchor = west, black, minimum size = 10pt] at ([xshift = 28pt, yshift = -50pt]genesis.east) (densechains) {\footnotesize  $\denseChains[i][3]$};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 33pt, yshift = -60pt]genesis.east) (block41) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 16pt]block41.east) (block42) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 79pt]block41.east) (block44) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 100pt]block41.east) (block45) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 126pt]block41.east) (block46) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 153pt]block41.east) (block47) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 175pt]block41.east) (block48) {};
+        \node[anchor = west, fill = kanade!50, minimum size = 10pt] at ([xshift = 200pt]block41.east) (block49) {};
+        \draw[kanade!50] (block41) -- (block49);
+
+        \begin{scope}
+            \node[fit = (densechains) (block49), draw = black, dashed, rectangle, inner sep = 3pt] (phase1box) {};
+        \end{scope}
+
+        \draw[->, black] (block11.west) [bend left=10]to ([yshift = -20pt]genesis);
+        \draw[->, black] (block21.west) [bend left=10]to ([yshift = -20pt]genesis);
+        \draw[->, black] (block31.west) [bend left=10]to ([yshift = -20pt]genesis);
+
+
+        \node[anchor = west, fill = kanade!80, minimum size = 10pt] at ([xshift = 225pt]block11.east) (block1xx) {};
+        \draw[->, black] (block1xx.west) to[bend right=20] (block16.east);
+        \draw[->, black] (block1xx.west) to[bend left=20] (block46.east);
+
+        \node[anchor = west, fill = kanade!80, minimum size = 10pt] at ([xshift = 225pt]block21.east) (block2xx) {};
+        \draw[->, black] (block2xx.west) to (block16.east);
+        \draw[->, black] (block2xx.west) to[bend left=10] (block46.east);
+
+        \node[anchor = west, fill = kanade!80, minimum size = 10pt] at ([xshift = 225pt]block31.east) (block3xx) {};
+        \draw[->, black] (block3xx.west) to (block16.east);
+        \draw[->, black] (block3xx.west) to (block46.east);
+
+        \node[fill = white, minimum width = 10pt, minimum height = 150pt] at (genesis) (shade) {};
+    \end{tikzpicture}
+    
+    \caption{An illustration of a party \party's local parallel chains \parallelChainsLocal and dense chains \denseChains. In order for initial blocks in phase $i + 1$ to be valid, they should point to at least 2 dense chains in phase $i$. In this toy example, all blocks point to the first dense chain in \parallelChainsLocal and the third dense chain in \denseChains. Note that the second chain is not dense.}
+    \label{fig:phase-parallel-chain-illustration}
+\end{figure}

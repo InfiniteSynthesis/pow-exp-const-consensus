@@ -1,0 +1,44 @@
+\begin{cccProtocol}
+    {\chainKingConsensus}
+    {chain-king-consensus}
+    {The main Chain-King Consensus protocol.}
+    
+    \begin{algorithmic}[1]
+        \State{Send $(\textsc{clock-read}, \sid_C)$ to \funcClock and get $(\textsc{clock-read}, \sid_C, r)$}
+        
+        \oneLineIf{$\round = r$}{\Return} \Comment{Wait for next round.}
+        \State{$\round \gets r, \phase \gets \lceil r / \phaseLength \rceil$}
+        
+        \If{$\exit = 0$}
+        
+        \State{Output \val} \Comment{Party has terminated.}
+        
+        \Else
+        
+        \State{Fetch information and denote the incoming chains and input-blocks by $\langle \parallelChains, denseChains \rangle_1, \ldots, \allowbreak \langle \parallelChains, denseChains \rangle_n$ and $\IB_1, \ldots, \IB_{n'}$}
+        
+        \State{Add $\langle \parallelChains, denseChains \rangle_1, \ldots, \langle \parallelChains, denseChains \rangle_n$ to \chainBuffer}
+        
+        \State{Add $\IB_1, \ldots, \IB_{n'}$ to \inputBlockBuffer}
+        
+        \State{$\parallelChainsLocal \gets \mathsf{UpdateLocalChain}(\parallelChainsLocal, \langle \parallelChains, denseChains \rangle_1, \ldots,\allowbreak \langle \parallelChains, denseChains \rangle_n)$}
+        
+        \LineComment{Update internal state}
+        
+        \State{Call $\mathsf{StateUpdate}$} \Comment{Call \cref{algorithm:update-state}}
+        
+        \LineComment{Mine new blocks}
+        
+        \State{$\st \gets \blockify(\parallelChainsLocal, \inputBlockBuffer)$\footnote{\blockify returns the string of $m$ block content roots; refer to~\cite{C:BMTZ17} for details.}}
+        
+        \State{$\parallelChainsLocal, \IB \gets \mathsf{ParallelPoW}(\parallelChainsLocal, \round, \st, \val)$}
+        \Comment{Call \cref{algorithm:mx1-pow}}
+        
+        \State{Diffuse \parallelChainsLocal}
+        
+        \oneLineIf{$\IB \neq \varepsilon$}{Diffuse \IB}
+        
+        \EndIf
+
+    \end{algorithmic}
+\end{cccProtocol}

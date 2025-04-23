@@ -1,0 +1,40 @@
+\begin{cccAlgorithm}
+    {$\mathsf{UpdateLocalChain}(\parallelChainsLocal, \chainBuffer)$}
+    {update-local-chain}
+    {Update local parallel chain from the chain buffer.}
+
+    \begin{algorithmic}[1]
+        \For{$\langle \parallelChains, denseChains \rangle \in \chainBuffer$}
+
+        \oneLineIf{\textbf{not} $\mathsf{IsValidChain}(\parallelChains)$}{\textbf{Continue}}
+        \Comment{Skip invalid chains}
+
+        \LineComment{Add new dense chains in previous phases to \denseChains}
+
+        \For{$i$ \textbf{from} $1$ \textbf{to} $\phase - 1$}
+        \For{$j$ \textbf{from} $1$ \textbf{to} $m$}
+        \State{Parse $\chain = \parallelChainsIdx{i}_{j}$}
+        \If{$\mathsf{isDenseChain}(\chain)$}
+        \If{\textbf{not} $\exists \chain' \in \denseChains[i][j]$ \textbf{and} $\stringSegment{\chainHead{\chainPrefix{\chain}{\phaseRefLength}}}{q}{m} = \stringSegment{\chainHead{\chainPrefix{\chain'}{\phaseRefLength}}}{q}{m}$}
+        \State{Add \chain to $\denseChains[i][j]$}
+        \EndIf
+        \EndIf
+
+        \For{$\chain \in \denseChains[i][j]$}
+        \If{\textbf{not} $\exists \chain' \in \denseChains[i][j]$ \textbf{and} $\stringSegment{\chainHead{\chainPrefix{\chain}{\phaseRefLength}}}{q}{m} = \stringSegment{\chainHead{\chainPrefix{\chain'}{\phaseRefLength}}}{q}{m}$}
+        \State{Add \chain to $\denseChains[i][j]$}
+        \EndIf
+        \EndFor
+        \EndFor
+        \EndFor
+
+        \LineComment{Extend chains in current phase using longest chain rule}
+
+        \For{$j$ \textbf{from} $1$ \textbf{to} $m$}
+        \State{Parse $\chain = \parallelChainsIdx{\phase}_j$ \textbf{and} $\chain'$ as the $j$-th chain in $\parallelChainsLocal^{(\phase)}$}
+        \oneLineIf{$\chainLength{\chain} > \chainLength{\chain'}$}{Update the $j$-th chain in $\parallelChainsLocal^{(\phase)}$ to \chain}
+        \EndFor
+
+        \EndFor
+    \end{algorithmic}
+\end{cccAlgorithm}

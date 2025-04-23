@@ -1,0 +1,34 @@
+\begin{cccAlgorithm}
+    {$\mathsf{ParallelPoW}(\parallelChains, r, st, val)$}
+    {mx1-pow}
+    {The \mforone mining procedure.}
+
+    \begin{algorithmic}[1]
+        \State{$h \gets \varepsilon$}
+        
+        \For{$i = 1$ \textbf{to} $m$}
+        \If{$\parallelChains_i = \varepsilon$}
+        \State{$h \gets h \mathbin\Vert 0^{\kappa / m}$}
+        \Else
+        \State{$\block \gets \chainHead{\parallelChains_i}$ and $h \gets h \mathbin\Vert \stringSegment{H(\block)}{i}{m}$}
+        \EndIf
+        \EndFor
+        
+        \State{$h' \gets \mathsf{ExtractInputFreshness}(\parallelChains, r)$} 
+        \Comment{Call \cref{algorithm:extract-input-freshness}}
+        
+        \State{$u \gets H(ctr, r, h, st, h', val)$}
+        \State{$\IB \gets \varepsilon$}
+        
+        \LineComment{Check if PoW succeeds on any chain/input-block.}
+        
+        \For{$i = 1$ \textbf{to} $m$}
+        \oneLineIf{$\stringSegment{u}{i}{m} < T$}{$\parallelChainsIdx{i} \gets \parallelChainsIdx{i} \mathbin\Vert  \langle ctr, r, h, st, h', val \rangle$} \Comment{Extend chain}
+        \oneLineIf{$\stringSegmentRev{u}{i}{m} < T$}{$\IB \gets \langle ctr, r, h, st, h', val \rangle$}
+        \EndFor
+        
+        \State{$ctr \gets ctr + 1$}
+        
+        \State{\Return \parallelChains, \IB}
+    \end{algorithmic}
+\end{cccAlgorithm}

@@ -1,0 +1,233 @@
+\subsection{From Parallel Chains to Phase Oblivious Agreement}
+\label{subsec:phase-oblivious-agreement}
+
+Given that running parallel chains from the CRS enjoy good properties only when the lifetime of the execution is bounded by a constant (\cref{thm:typical-execution-parallel-chain}),  we now show how to combine the parallel chain structure with a novel phase-based cross-chain reference scheme in order to provide fresh randomness and extend the protocol running time to any polynomial in terms of the security parameter.
+%
+This gives us novel chain validation and selection rules.
+%
+Moreover, we show that in each phase, the approach achieves what we call \emph{phase oblivious agreement}, which serves as an essential building block in our \chainKingConsensus protocol.
+
+In this section, we assume static participation where parties are always online and their number is fixed yet unknown to any protocol participant.
+%
+Later on (\cref{subsec:bootstrapping-from-genesis}), we elaborate on how to let new joining parties synchronize with other participants.
+
+\paragraph{Protocol phases.}
+%
+We divide the protocol execution time into sequential, non-overlapping phases of length \phaseLength rounds.
+%
+Note that \phaseLength is a constant and at round $r$ parties are in the $\lceil r / \phaseLength \rceil$-th phase (the phase index starts at $1$).
+%
+As we assume synchronous processors, parties are always aware of the current round and phase numbers (they maintain local variables \round and \phase to store this information).
+
+In contrast to the ``conventional'' longest-chain consensus rule where parties keep extending chains starting from the genesis block, in our protocol in each phase parties will build parallel chains separately, which we will denote \parallelChainsIdx{i}, and the $j$-th chain in the $i$-th phase by $\parallelChainsIdx{i}_j$.
+%
+Let \parallelChains now denote the sequence of parallel chains in each phase---i.e., $\parallelChains = \parallelChainsIdx{1}, \parallelChainsIdx{2}, \ldots, \parallelChainsIdx{i}$.
+%
+In the first phase, $\parallelChainsIdx{1}$ points to the CRS, thus the adversary starts the computation simultaneously with the honest parties.
+%
+Unfortunately, the CRS is only available at the onset of the execution, and hence, na\"{i}vely, there is no method to prevent the adversary from mining into the future---e.g., when it is in phase $i$, he can mine blocks for phase $i + 1$.
+%
+If pre-mining is possible for an unbounded time, then no security guarantees can be achieved in the $(i + 1)$-th phase even if typical execution holds.
+
+One conventional method to solve the pre-mining problem in blockchains (cf.~\cite{PODC:PasShi17}) consists of referring to a stable block with randomness that is unpredictable to the adversary (e.g., an honest block).
+%
+Unfortunately, since phases here only last for a constant number of rounds, thus far there is no approach that would enable parties to explicitly agree on common unpredictable randomness in constant time (as this would directly imply full agreement on a non-trivial fact, which is our goal).
+%
+Without a full agreement on common randomness, the adversary can split the honest computational power by building a chain with randomness that is acceptable by, say, half of the honest parties but that will be rejected by the rest.
+%
+In such way the adversary can then split the honest computational power and thus completely break the security of the protocol.
+
+To overcome the failure of the conventional common fresh randomness approach, we propose a new scheme called ``cross-chain reference'' to secure the execution on parallel chains in the second and subsequent phases.
+%
+In short, cross-chain reference asks for all chains in the $i$-th phase to point to a large fraction of the chains in the $(i - 1)$-th phase that are ``dense,'' a property which we will elaborate on soon.
+
+As a preparation for securing phase-based parallel chains, we first introduce the structure of a phase (see~\cref{fig:phase-parallel-chain-illustration}).
+%
+A phase, consisting of \phaseLength rounds, is further divided into three non-overlapping \emph{stages}.
+%
+A block is assigned to a specific stage based on its timestamp.
+%
+The first stage, \emph{view convergence}, consists of the first \phaseViewLength rounds in a phase.
+%
+It guarantees that at the end of this stage, on sufficiently many parallel chains, honest parties agree on a common prefix \emph{obliviously} and they input some \emph{recent} randomness so that the adversary cannot pre-compute too many blocks for the next stage.
+%
+Then, the second stage, \emph{output generation}, which consists of \phaseOutputLength rounds after the view convergence stage, is used to decide the output of this phase.
+%
+Only input blocks that are included by chain-blocks in this stage will be considered in the decision making procedure at the end of this phase (details in~\cref{subsec:chain-king-consensus}).
+%
+The length \phaseOutputLength is chosen sufficiently large  so that the honest input-blocks account for the majority on sufficiently many parallel chains.
+%
+Finally, the last stage, \emph{reference convergence}, consists of the last \phaseRefLength rounds.
+%
+This last stage is used to secure the blocks that will be pointed by the cross-chain reference.
+%
+Note that \phaseRefLength is also the upper bound on adversarial pre-mining---i.e., the adversary cannot start to mine blocks in the next phase \phaseRefLength rounds earlier than the honest parties.
+
+\input{figures/phase-parallel-chain}
+
+\paragraph{Dense chains.}
+%
+Next, we introduce a new concept called \emph{dense chains} which asks for the density of a chain (in terms of the number of blocks with timestamps in a given time period) and can also be used as a proof of ``chain growth'' (cf.~\cite{EPRINT:GarKiaLeo14}).
+%
+Specifically, let $\densityParam, s$ denote the density parameter.
+%
+We say a chain \chain is ``dense'' (formal definition coming up below) in a time window (i.e., sequence of rounds) $\{ u, \ldots, v \}$ if for any set $S$ of at least $s$ consecutive rounds in $\{ u, \ldots, v \}$, \chain has at least $\densityParam \cdot |S|$ blocks with timestamps in $S$.
+
+When referring to a single chain \chain in phase-based parallel chains (e.g., the $j$-th chain in the $i$-th phase), we will say that \chain is dense if for any set $S$ of \phaseRefLength consecutive rounds in the output generation and reference convergence stages, there are \emph{more than} $\phaseRefLength \cdot \densityParam$ blocks in \chain reporting timestamps in $S$.
+%
+Formally:
+
+\begin{definition}[Dense chains] \label{def:dense-chains}
+      A chain \chain is a \emph{$(\densityParam, s, u, v)$-dense chain} if for any set $S = \{p, \ldots, q \}$ of consecutive rounds such that $u \le p < q \le v$ and $|S| > s$, there are at least $\densityParam \cdot |S|$ blocks in \chain with timestamp in $S$.
+      %
+      A chain \chain is a \emph{ dense chain on phase $i$} if it is a $(\densityParam, \phaseRefLength, (i - 1) \phaseLength + \phaseViewLength, i \cdot \phaseLength)$-dense chain---i.e., the chain is dense in the last two stages of the $i$-th phase.
+\end{definition}
+
+We choose the density parameter \densityParam in such a way that when typical execution property holds on a single chain, the following two properties are guaranteed: (i) even if the adversary completely stops producing PoWs, the honest parties by themselves can produce a dense chain; and (ii) in the $i$-th phase, the adversary cannot come up with a dense chain before the reference convergence stage.
+
+With foresight, the purpose of dense chains is to secure the execution of future phases, by asking parties to provide sufficiently many dense chains as a proof of having invested enough computational power before the current phase.
+
+\paragraph{Cross-chain references.}
+%
+Next, we elaborate on the cross-chain reference approach which we use to ``link'' neighboring phases (this provides unpredictability so that the adversary can only pre-mine for a bounded amount of time).
+%
+At a high level, a cross-chain reference on an initial block in the $j$-th chain and $i$-th phase is a $\kappa$-bit string consisting of $m$ pointers to $m$ sufficiently deep blocks on chains in the $(i - 1)$-th phase.
+%
+These deep blocks are picked as the last blocks in the output generation stage, one on each chain.
+%
+Their hashes (that is, the $j$-th segment of a block hash, for a block on the $j$-th chain) are concatenated to form the $\kappa$-bit string.
+%
+We assign this reference to the input freshness $h'$ (recall our block header structure in~\cref{subsec:parallel-chains}) in the initial blocks on each chain's $i$-th phase.
+%
+For a cross-chain reference to be considered valid, it should point to at least a large fraction of deep blocks in \emph{dense} chains in the previous phase\footnote{We cannot require the cross-chain reference to point to all the dense chains in previous phase for two reasons: (i) when typical execution fails it can be the case that neither the honest parties nor the adversary produce a dense chain; and (ii) the adversary can split parties by delivering a private adversarial dense chain to only some of them.}.
+%
+However, these dense chains are not necessarily required to match the parties' own chains of the previous phase, but can be attached as a proof of validity.
+
+To facilitate the chain validation and selection algorithm, a party \party maintains local variables \parallelChainsLocal to record her own parallel chains and \denseChains to bookkeep all valid (single) dense chains that are not in \parallelChainsLocal.
+%
+Note that \denseChains and \parallelChainsLocal are diffused together.
+%
+In more detail, \denseChains is a two dimension vector with $\denseChains[i][j]$ containing a (possibly empty) set of (single) dense chains that a party has seen as the $j$-th chain in $i$-th phase.
+%
+Party \party also maintains a local variable \chainBuffer which contains all pairs of $\langle \parallelChains, \denseChains \rangle$ that \party receives at the beginning of the round.
+%
+Refer to~\cref{fig:phase-parallel-chain-illustration} for an illustration of our phase-based parallel chain.
+
+We now formalize the $\mathsf{ExtractInputFreshness}$ procedure (see~\cref{algorithm:extract-input-freshness}) which parties use to extract cross-chain reference and fresh randomness for input-blocks.
+%
+Specifically, when this algorithm is called in the view convergence stage of the $i$-th phase ($i > 1$), it returns a $\kappa$-bit string which is a concatenation of hashes of the blocks with largest block height whose timestamp is less than $(i - 1) \phaseLength - \phaseRefLength$ on each chain.
+%
+When $\mathsf{ExtractInputFreshness}$ is called in the output generation stage, it returns the concatenation of $m$ hashes of the blocks that are $k$-rounds before the end of the view convergence stage in this phase (we will show later that $k$ is the parameter for common prefix on typical chains).
+%
+When this algorithm is called at any other time, it returns an all-zero string.
+
+\input{algorithms/extract-input-freshness}
+
+\paragraph{Parallel-chain validation algorithm.}
+%
+Recall that in our protocol, we use a \mforone PoW scheme to mine $m$ parallel chains, and, on each chain, we use \twoforone PoW to bind the mining process of chain-blocks \block and input-blocks \IB together; moreover, we divide chains into phases and introduce cross-chain reference to link neighboring phases.
+%
+Our validation rule will consider the validity of all blocks, chains (in a single phase) and the cross-chain references.
+%
+Specifically, a parallel chain \parallelChains (with its associated $\denseChains$) will be considered valid if the following holds (refer to~\cref{algorithm:isvalidchain} in~\cref{sec:algorithms-omitted} for a full description):
+
+\begin{cccItemize}[noitemsep]
+      \item \emph{Valid single chains.}
+      %
+      For any $\chain = \block_1, \block_2, \ldots, \block_n$ (either a $\parallelChainsIdx{i}_j$ or in $\denseChains[i][j]$), \chain should be a valid single chain.
+      %
+      More specifically, \chain is a valid chain if (i) all blocks are the result of successful PoWs; (ii) all blocks' state $st$ match their corresponding block content; and (iii) for all $i > 1$, $B_{i}$ refers to the hash of $B_{i - 1}$.
+      %
+      Additionally, for chains in the first phase, $\block_1$ should point to the CRS.
+
+      \item \emph{Valid input blocks.}
+      %
+      For any input block \IB included in \chain in the $i$-th phase, \IB should pass the following check: (i) it reports a unique hash among all input-blocks; (ii) the timestamp of \IB falls in the output generation stage; (iii) \IB is a successful PoW and contains a valid input message $val$; and (iv) \IB points to the last block on \chain with timestamp less than $(i - 1)\phaseLength + \phaseViewLength - k$ (i.e., good fresh randomness).
+
+      \item \emph{Valid cross-chain reference.}
+      %
+      In the $i$-th phase ($i > 1$), all initial blocks of chains in \parallelChainsIdx{i} and $\denseChains[i]$ report good cross-chain reference.
+      %
+      In order for a cross-chain reference to be good, at least a $\beta > 3 / 4$ fraction of hashes should match the last blocks in the output generation stage on dense chains in the $(i - 1)$-th phase, either in \parallelChains or $\denseChains$.
+      %
+      Note that their positions should also match---i.e., the $j$-th segment of reference should match a deep block in $\parallelChainsIdx{i - 1}_j$ or $\denseChains[i - 1][j]$.
+\end{cccItemize}
+
+We remark that our chain validation rule is different from that used in both the single chain validation as well as in all previous parallel-chain constructions due to its novel cross-chain reference mechanism.
+%
+Specifically, starting in the second, the initial block on a single chain \chain does not directly point to the last block in the previous phase---i.e. its previous state reference $h$ becomes dummy.
+%
+As long as \chain provides a valid cross-chain reference and forms a valid single chain, \chain will be considered as valid.
+%
+We note that since previous state references (the hash pointer) between neighboring phases are not continuous, the adversary is allowed to keep extending the head of the chains in the previous phase by keeping mining and inserting blocks.
+%
+Moreover, as our protocol does not ask for cross-references to all previous chains, it is also possible that honest parties never hold exactly the same parallel chain.
+
+We now provide some more intuition on these two new properties.
+%
+Regarding the adversarial extension of chains from previous phases, parties will check-point their chains phase-by-phase (see the chain selection rule below), hence this does not undermine the security of online parties.
+%
+Regarding the possible disagreement on a certain fraction of the parallel chains, we note that this is unavoidable.
+%
+Otherwise, if parties were aware that they would achieve a full agreement on a specific phase, this would directly imply that they reach consensus (and with simultaneous termination!).
+%
+Our goal is to let honest parties share parallel chains such that in each phase, they \emph{obliviously} agree on the prefix of a large fraction of the chains.
+
+\paragraph{Parallel-chain selection algorithm.}
+%
+We now introduce the chain selection algorithm.
+%
+In a nutshell, this algorithm does not update local parallel chains as a whole; rather, it updates each single chain in the current phase---i.e., after phase $i$ has passed, \parallelChainsLocal is check-pointed up to phase $i$ and all chains in the previous phases will never be changed.
+%
+When parties are in the first phase, they use the longest chain rule to select each single chain separately.
+%
+When parties are in the $i$-th phase $(i > 1)$, a party \party processes the chains stored in \chainBuffer as follows:
+
+\begin{cccItemize}[noitemsep]
+      \item \emph{Filter invalid chains.}
+      %
+      For any $\parallelChains \in \chainBuffer$, if \parallelChains is not a valid chain, \party rejects \parallelChains immediately and removes it (as well as its associated dense chains) from \chainBuffer.
+
+      \item \emph{Update \denseChains.}
+      %
+      For all $i' < i$ and $j \in [m]$, \party updates $\denseChains[i'][j]$ as follows.
+      %
+      If there is a valid dense chain \chain as the $j$-th chain in phase $i'$ (either in \parallelChains or $\denseChains[i'][j]$ from another party) that forks from all the chains in $\denseChains[i' - 1][j]$ for more than \phaseRefLength rounds, \party adds \chain to $\denseChains[i' - 1][j]$ (i.e., it bookkeeps new dense chains with new cross-chain reference pointer blocks).
+
+      \item \emph{Adopt longer chains.}
+      %
+      \party uses the longest chain rule to select chains in the current phase.
+      %
+      For any incoming chain \parallelChains, if $\chainLength{\parallelChainsIdx{i}_j} > \chainLength{\chain}$ where \chain is the $j$-th chain in $\parallelChainsLocal^{(i)}$, then \party updates \chain to $\parallelChainsIdx{i}_j$.
+\end{cccItemize}
+
+\noindent See~\cref{algorithm:update-local-chain} for a detailed description of the above rules.
+
+\input{algorithms/update-local-chain}
+
+\paragraph{Phase oblivious agreement.}
+%
+Notice that in each phase, the probability that for a large fraction of chains their execution is typical (\cref{def:typical-informal}) is overwhelming.
+%
+Further, our phase-based parallel-chain structure and density-based chain validation and selection rules guarantee that the adversary can only pre-mine for a bounded amount of time, hence ``good'' properties---i.e., agreement and chain quality (high enough fraction of honest blocks) on the input-blocks---hold on a large fraction of the chains in every phase.
+%
+Except that as parties are not able to discern on which chains they have agreement, agreement is achieved \emph{obliviously}, yielding the following:
+
+\begin{restatable}[Phase oblivious agreement]{theorem}{theoremphaseobliviousagreement}
+      \label{thm:phase-oblivious-agreement}
+      There exist protocol parameterizations such that the following properties hold.
+      %
+      Let $\beta \in (3 / 4, 1)$ and consider a phase $i$.
+      %
+      Let $\parallelChains, \parallelChains'$ denote the parallel chains held by two honest parties $\party, \party'$ at rounds $r, r'$ after phase $i$ (i.e., $\min\{r, r'\} > i \phaseLength$), respectively.
+      %
+      Then there exists a subset $S \subseteq \{1, 2, \ldots, m \}$ of size larger than $\beta \cdot m$ such that for all $j \in S$, the following two properties hold on chains $\chain = \parallelChains^{(i)}_j$ and $\chain' = \parallelChains'^{(i)}_j$.
+      %
+      \begin{cccItemize}[nosep]
+            \item \textbf{\emph{Agreement:}} $\chainPrefix{\chain}{\phaseRefLength} = \chainPrefix{\chain'}{\phaseRefLength}$.
+            
+            \item \textbf{\emph{Honest input-block majority:}}  For all input-blocks included in the output generation stage of \chain and $\chain'$, more than half of them are produced by honest parties.
+      \end{cccItemize}
+\end{restatable}
+
+Refer to~\cref{subsec:analysis-phase-oblivious-agreement} for a detailed analysis of the algorithms in this section and the proof of \cref{thm:phase-oblivious-agreement}.

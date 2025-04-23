@@ -1,0 +1,268 @@
+\subsection{Fast Sequential Composition}
+\label{subsec:fast-sequential-composition}
+
+The chain-king consensus protocol presented in~\cref{subsec:chain-king-consensus} is \emph{one-shot}---i.e., parties start at the same time and terminate at (possibly) different phases.
+%
+This non-simultaneous termination turns out to be problematic when \chainKingConsensus is invoked by a high-level protocol, such as MPC or SMR, and where parties need to decide on a series of outputs repeatedly.
+%
+Given the non-simultaneous termination situation, after the first invocation, parties would not be able to return to the calling high-level protocol synchronously, and in subsequent invocations, \chainKingConsensus does not by itself provide any security guarantees if parties start at different phases\footnote{We note that \chainKingConsensus can tolerate adversarial pre-mining for up to $\phaseRefLength \ll \phaseLength$ rounds, details see analysis in~\cref{subsec:analysis-phase-oblivious-agreement}.}.
+%
+Ideally, when the same protocol is invoked multiple times, the round complexity should be preserved---i.e., for $\ell$ sequential invocations, the total running time should be expected $\bigO(\ell)$ rounds.
+
+In the classical distributed computing and cryptographic protocols literature, this is studied as the sequential composition of BA protocols, with positive results:
+%
+By using so-called ``Bracha termination'' \cite{PODC:Bracha84} and super-round expansion \cite{C:CCGZ16}, a BA protocol with probabilistic termination can asymptotically preserve the same round complexity while continuously deciding on a series of outputs.
+
+In this section we show how to achieve fast sequential composition of multiple instances of \chainKingConsensus by first emulating the Bracha termination strategy on parallel chains, thus enabling parties to terminate in two neighboring phases; then, for later invocations, we introduce a novel ``super-phase expansion'' protocol that guarantees security under non-simultaneous start while preserving the expected-constant round complexity.
+%
+Note that, our ``super-phase expansion'' works for any slack of constant number of rounds, hence Bracha termination is in fact not necessary.
+%
+Nonetheless, we will first go through this strategy since it helps to achieve a more concise and (practically) efficient result.
+
+\paragraph{Bracha termination.}
+%
+In our one-shot Chain-King Consensus protocol, honest parties might terminate at the end of different but adjacent iterations.
+%
+We now show how to reduce this slack from one iteration (i.e., 3 phases) to one phase.
+%
+The high-level idea follows Bracha's original suggestion \cite{PODC:Bracha84}, but we adapt it to the PoW setting.
+
+We first describe this approach in the classical setting (information-theoretic and assuming $n \ge 3t + 1$).
+%
+In Bracha's suggestion, as soon as a party decides on an output $v$ or upon receiving at least $t + 1$ messages $(decide, v)$ for the same value $v$, it sends $(decide, v)$ to all parties.
+%
+Then, upon receiving $n - t$ messages $(decide, v)$ for the same value $v$, a party outputs $v$ and terminates.
+
+We now elaborate on our early termination strategy which tries to emulate Bracha's suggestion on parallel chains.
+%
+Recall that in \chainKingConsensus the input-block content is its producer's output suggestion $val$. Here we extend it two types of messages: either output suggestion $val$, or decide suggestion $(decide, val)$.
+%
+We say a chain $\parallelChains^{(i)}_j$ decides on $val$ if more than half of the input-blocks included in the output generation stage report $(decide, val)$ for the same $val$.
+%
+Note that when a chain does not decide on any $val$, the output extraction algorithm treats all $(decide, val)$ messages the same as $val$.
+
+Thus, protocol \chainKingConsensus is modified with the following additional steps:
+
+\begin{cccItemize}[noitemsep]
+    \item When \party's internal variable \decide is \false, \party includes only \val in her input-blocks; when \decide is \true, \party mines $(decide, \val)$.
+
+    \item At the end of any phase, upon observing more than $m / 2$ chains decide on $val$, \party sets her \val to $val$ and \decide to \true.
+
+    \item At the end of any phase, upon observing more than $3m / 4$ chains decide on $val$, \party sets her \val to $val$ and \exit to $1$.
+
+    \item After setting \exit to $1$ in the previous step, \party continues to mine $(decide, \val)$ for \emph{one more phase} and then set \exit to $0$.
+\end{cccItemize}
+
+We present the new state update mechanism in~\cref{algorithm:update-state-close-termination}.
+
+\input{algorithms/state-update-bracha-termination}
+
+\begin{theorem} \label{thm:bracha-termination}
+    There exist protocol parameterizations such that \chainKingConsensus modified with \cref{algorithm:update-state-close-termination} satisfies agreement, validity and 1-slack termination with expected-constant round complexity.
+\end{theorem}
+
+\begin{proof}
+    Let $i$ be the first phase such that there is at least one honest party \party set her \decide to \true and \val to $v$ by observing more than $m / 2$ chains reporting $(decide, v)$.
+    %
+    We show that there is at least one honest party $\party'$ set her \decide to \true and \val to $v$ at a phase $i' < i$.
+    %
+    Suppose there is no such party $\party'$, then no honest party mine $(decide, v)$ before the end of phase $i$.
+    %
+    I.e., the adversary mines majority of the input-blocks on more than $m / 2$ chains, which contradicts the fact that phase oblivious agreement is achieved on phase $i$ (\cref{thm:phase-oblivious-agreement}) where at most $m / 4$ chains can report a majority of corrupted input-blocks.
+    %
+    Combining this with~\cref{claim:state-update-properties,thm:chain-king-consensus} we learn that our new protocol with Bracha-style termination, if all parties eventually terminate, achieves agreement and validity.
+
+    Next we argue that parties will terminate in neighbor phases using expected constant number phases.
+    %
+    Let $i$ be the first phase such that there is at least one honest party \party set her \exit to 1.
+    %
+    We show that all honest parties set \exit to 1 either in phase $i$ or $i + 1$.
+    %
+    Suppose --- towards a contradiction --- there is another party $\party'$ set her \exit to 1 at some round $i' > i + 1$ (or, never set \exit to 1).
+    %
+    I.e., $\party'$ saw less than $3m / 4$ chains outputting $(decide, v)$ in phase $i + 1$.
+    %
+    Consider \party, since \party sets \exit to 1, she saw more than $3m / 4$ chains outputting $(decide, v)$ in phase $i$.
+    %
+    \cref{thm:phase-oblivious-agreement} implies that all honest parties would see at least $(m / 2 + 1)$ chains outputting $(decide, v)$ in phase $i$ --- i.e., they set \decide to \true and \val to $v$ and start to mine $(decide, v)$.
+    %
+    Thus at the beginning of phase $i + 1$ all honest parties mine $(decide, v)$.
+    %
+    By~\cref{thm:phase-oblivious-agreement} they will succeed on at least $(3m / 4 + 1)$ chains and report majority of the input-blocks with $(decide, v)$.
+    %
+    This contradicts the assumption that  $\party'$ saw no more than $3m / 4$ chains outputting $(decide, v)$ in phase $i + 1$.
+    %
+    I.e., the new protocol achieves 1-slack termination.
+
+    Finally, consider round complexity.
+    %
+    Note that without the Bracha-style termination strategy, all honest parties will set their \decide to \true in expected-constant time which is the same as \chainKingConsensus.
+    %
+    Upon all honest parties set \decide to \true, they will saw at least $(3m / 4 + 1)$ chains outputting $(decide, v)$ and then set \exit to 1.
+    %
+    I.e., in the worst case, this new protocol terminates in one more phase than the number of phases that \chainKingConsensus needs to let all parties decide --- which is in expected-constant time.
+    %
+    Hence the round complexity of \chainKingConsensus with Bracha-style termination strategy is also expected-constant.
+\end{proof}
+
+\paragraph{Slack-tolerant sequential composition of \chainKingConsensus.}
+%
+Now we present how sequential composition works in the permissionless setting.
+%
+We remark that this is not a straightforward emulation of the super-round expansion technique in the classical literature as in our setting, the adversary effectively has more power in ``swinging'' the decision of honest parties.
+%
+We elaborate on the difference between classical round expansion and our novel ``super-phase expansion.''
+
+In order to perform sequential composition, our protocol should be appropriately adjusted so that we have better quality of phase-oblivious agreement.
+%
+Recall that \cref{thm:phase-oblivious-agreement} holds for any constant $\beta < 1$.
+%
+While in one-shot \chainKingConsensus we have protocol parameterizations such that at least three quarters of the chains will reach phase-oblivious agreement, it is possible to achieve that an arbitrary (constant) fraction of chains reach oblivious agreement.
+%
+One consequence is that we will get a slow-down on the length of a phase in terms of number of rounds; the asymptotic result (i.e., expected-constant number of rounds), however, is preserved.
+
+Furthermore, consider any $n \in \mathbb{N}^+$ consecutive phases in an execution of the protocol.
+%
+If $\beta$ fraction of the chains have reached oblivious agreement in one phase, then at least $[1 - n(1 - \beta)]$ fraction of chains reach oblivious agreement over all $n$ phases.
+%
+By appropriately choosing $n$ and $\beta$, we get the following property:
+%
+In any $n$ consecutive phases at least three-quarters of the chains achieve phase-oblivious agreement over all phases.
+%
+For example, when $\beta = 95\%$ and $n = 3$, for any 3 consecutive phases, honest parties obliviously agree on at least three quarters of the chains.
+%
+As a result, we have the following corollary to~\cref{thm:phase-oblivious-agreement}:
+
+\begin{corollary}
+    [Multi-phase oblivious agreement]
+    \label{corollary:super-phase-oblivious-agreement}
+    There exist protocol parameterizations such that the following properties hold.
+    %
+    Consider $n \in \mathbb{N}^+$ consecutive phases $i, i + 1, \ldots, i + n - 1$, $i \ge 1$.
+    %
+    Let $\parallelChains, \parallelChains'$ denote the parallel chains held by two honest parties $\party, \party'$ at round $r, r'$, respectively, after the $(i + n - 1)$-th phase (i.e., $\min\{r, r'\} > (i + n - 1) \phaseLength$).
+    %
+    Then there exists a subset $S \subseteq \{1, 2, \ldots, m \}$ of size $|S| > 3m / 4$ such that for any $j \in S$ and any $k \in \{i, i + 1, \ldots, i + n\}$, the following two properties hold on chains $\chain = \parallelChains^{(k)}_j$ and $\chain' = \parallelChains'^{(k)}_j$:
+    %
+    \begin{cccItemize}[nosep]
+        \item \textbf{\emph{Agreement.}} $\chainPrefix{\chain}{\phaseRefLength} = \chainPrefix{\chain'}{\phaseRefLength}$.
+       
+        \item \textbf{\emph{Honest input-block majority.}} For all input blocks included in the output generation stage of \chain and $\chain'$, more than half of them are produced by honest parties.
+    \end{cccItemize}
+\end{corollary}
+
+\begin{proof}
+    Fix $n$ phases $\{i, i + 1, \ldots, i + n - 1 \}$.
+    %
+    Suppose the protocol is appropriately parameterized such that phase oblivious agreement is achieved on more than $\beta = 1 - 1 / (4n) + \epsilon$ fraction of chains in each phase.
+    %
+    Let $A$ denote the (bad) event on two chains \chain and $\chain'$ such that either $\chainPrefix{\chain}{\phaseRefLength} \neq \chainPrefix{\chain'}{\phaseRefLength}$ or more than half of the input blocks in \chain are produced by the adversary.
+
+    Suppose towards a contradiction, there exist a subset $S \subseteq \{1, 2, \ldots, m \}$ of size at least $m / 4$ (i.e., $1 / 4$ fraction) such that $\exists k \in \{i, i + 1, \ldots, i + n - 1\}, j \in S$ and $\chain = \parallelChains^{(k)}_j$ and $\chain' = \parallelChains'^{(k)}_j$, $A$ happens on \chain and $\chain'$.
+    %
+    Then, due to Pigeonhole principle, there exists $k^* \in \{i, i + 1, \ldots, i + n - 1\}$ such that for a subset $S' \subseteq \{1, 2, \ldots, m \}$ of size at least $(1 / 4) / n \ge 1 / (4n)$ and $\chain = \parallelChains^{(k^*)}_j$ and $\chain' = \parallelChains'^{(k^*)}_j$, $A$ happens on \chain and $\chain'$.
+    %
+    However, since $\beta = 1 - 1 / (4n) + \epsilon$ according to~\cref{thm:phase-oblivious-agreement}, in each phase the fraction of chains such that oblivious agreement fails is bounded by $1 / (4n)$, which contradicts the number of failing repetitions in the $k$-th phase.
+\end{proof}
+
+Regarding input messages, we also require that parties attach messages indicating the index of invocations and the index and steps of iterations in their input messages.
+%
+That is, a valid input message in sequential composition would be of the form ``This is the $i$-th invocation, $j$-th iteration and $k$-th phase, and my output suggestion is $val$.''
+%
+We omit the details of encoding such messages.
+%
+Moreover, in some ``dummy'' phases, parties are allowed to send dummy suggestion $\bot$ that contains no information.
+
+Given that parties can terminate and start within two neighboring phases, our super-phase expansion (which will be adopted in the second and subsequent invocations) replaces the original (aligned) phase to four (possibly unaligned) phases ``input-input-input-dummy.''
+%
+I.e., parties report their suggested output during the first three phases in their local view, and leave the last phase dummy.
+%
+See~\cref{fig:super-phase-expansion} for an illustration of an aligned super-phase and an unaligned one.
+
+\input{figures/super-phase-expansion}
+
+The decision process works as follows.
+%
+When a party \party reaches the end of a super-phase (in her local view), she decides an output (a vector of size $m$) for this super-phase based on the output of \emph{five} previous (normal) phases -- i.e., starting from one normal phase before the current super-phase (see the illustration of ``Super-Phase Output'' in~\cref{fig:super-phase-expansion}).
+%
+For each chain, \party does the following.
+%
+Recall that parties are allowed to report $\bot$.
+%
+When there is a (normal) phase such that more than half of the input-blocks report $\bot$, then we say this phase reports $\bot$.
+%
+Otherwise, pick the median value of all non-$\bot$ values (after sorting) as the output of this phase. The decisions are as follows:
+%
+\begin{cccItemize}[noitemsep]
+    \item When there are more than two phases that output non-$\bot$ values, output the value in the \emph{second} phase.
+    
+    \item When there is one phase outputting a value $val$, output $val$ for this super-phase.
+\end{cccItemize}
+
+Next, we provide some intuition on why adding a dummy phase at the end of a super-phase is necessary.
+%
+When honest parties do not start unanimously with the same value, the adversary can join forces with those late honest parties in their last phase so that the view of honest parties are not consistent (because the parties that terminate early should make a decision when other honest parties have not yet finished their current super phase).
+%
+With dummy rounds, all honest parties share a consistent view under multi-phase oblivious agreement, hence guaranteeing agreement and validity.
+
+Moreover, keeping including the output suggestion for 3 consecutive normal phases is also necessary.
+%
+For a concrete example, suppose the underlying one-shot consensus protocol achieves 1-slack termination, and the honest computational power accounts for $60\%$ of the total (i.e., the adversary owns $40\%$) and honest parties are equally divided into two subsets, starting from two neighboring phases.
+%
+In other words, we have parties starting and terminate early (resp., late) that accounts for $30\%$ of computational power.
+%
+Then, if parties include their output suggestion for only two phases, the adversary can refrain from mining in the first normal phase of the early parties, and join forces with the late parties in their second normal phase but inject a non-honest input.
+%
+In such a case, even if parties start unanimously with $v$ the output of this chain under multi-phase oblivious agreement will not be $v$ (as $40\%$ is greater than $30\%$), thus violating the validity property of consensus.
+%
+With 3 consecutive mining normal phases, at least two of them will overlap, an adopting an output in the second non-$\bot$ phase will be safe.
+
+The super-phase expansion can be easily adapted from a 1-slack non-simultaneous start to $c$-slack, for any constant $c$.
+%
+We briefly describe the most na\"{i}ve treatment.
+%
+For $c$-slack termination, a super-phase consists of $(3c + 1)$ rounds where parties keep mining their suggested output for this super-phase in the first $(2c + 1)$ normal phases, and sending $\bot$ in the last $c$ phases (i.e., $c$ dummy phases in total).
+%
+To extract the output of a chain, $(4c + 1)$ rounds are considered.
+%
+Similar to the treatment in 1-slack termination, when there are more than $(c + 1)$ phases outputting  a non-$\bot$ value, take the output from the $(c + 1)$-th phase; otherwise, output the value in the last phase.
+%
+At a high level, with $c$-slack termination parties will share at least $(c + 1)$ overlapping phases (or any phase, as this implies some bad event happened so we do not expect an agreement).
+%
+Under multi-phase oblivious agreement, the adversary can join forces with early honest parties for at most $c$ phases.
+%
+Hence, taking output from the $(c + 1)$-th phase will result in a value from the overlapping normal phases where all honest parties mine their suggested values.
+
+By adopting the 1-slack termination technique and super-phase expansion, we get the following theorem for sequential composition of $\ell$ invocations of \chainKingConsensus.
+
+\begin{theorem} \label{thm:chain-king-consensus-sequential-composition}
+    There exist protocol parameterizations such that the sequential composition of $\ell$ invocations of \chainKingConsensus satisfies agreement and validity on each invocation, and the round complexity is expected $\bigO(\ell)$.
+\end{theorem}
+
+\begin{proof}
+    Note that \cref{thm:bracha-termination} implies that parties terminate at adjacent phases in the first invocation, we prove this theorem by induction.
+
+    Suppose that the $i$-th protocol invocation achieves agreement, validity and 1-slack termination in expected-constant time, we show these properties still holds in the $(i + 1)$-th invocation.
+
+    To argue for the protocol invocations using super-phase expansion, based on \cref{claim:state-update-properties}, we consider the following two properties.
+    %
+    First, when parties start unanimously with $val$, they saw more than $3m / 4$ chains report $val$.
+    %
+    Second, when parties refer to the king chain, with constant probability their view is consistent, and the majority of the input-blocks in king chain are produced by honest parties.
+
+    To prove the first property, suppose our protocol is well parameterized such that multi-phase oblivious agreement is achieved for any six consecutive phases $i, i + 1, \ldots, i + 5$ due to~\cref{corollary:super-phase-oblivious-agreement}.
+    %
+    Consider the $j$-th chain where typical execution holds for all six phases.
+    %
+    We consider parties start in two neighbor normal phases $i + 1$ and $i + 2$.
+    %
+    Since phase oblivious agreement holds in phase $i$ and $i + 5$, the adversary cannot let the $j$-th chain output a valid value in this super phase.
+    % 
+    Since all honest parties will join force in phase $i + 2, i + 3$, by adopting the output in the second phase (which outputs a valid value) in their local view, either all honest parties adopt the output of phase $i + 2$ or all honest parties adopt the output of phase $i + 3$.
+    %
+    Since this holds on more than $3m/ 4$ chains, when parties start unanimously with $val$ they saw more than $3m/ 4$ chains outputting $val$; and when there is an honest party saw more than $3m/ 4$ chains outputting $val$, all honest parties saw more than $m / 2$ chains outputting $val$.
+
+    Regarding the second property, note that the probability that phase oblivious agreement holds on king chain for six consecutive rounds is more than $3 / 4$.
+    %
+    Using a similar argument we show that with constant probability, every honest party shares a consistent view of the king chain and the majority of input-blocks are produced by honest parties.
+\end{proof}

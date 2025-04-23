@@ -1,0 +1,46 @@
+\begin{cccAlgorithm}
+    {$\mathsf{StateUpdateWithCloseTermination}$}
+    {update-state-close-termination}
+    {The state update procedure with 1-slack termination.}
+    
+    \begin{algorithmic}[1]
+        \LineComment{This algorithm is called once in each phase. It directly interacts with internal variables \val, \lock, \decide and \exit.}
+        
+        \oneLineIf{$\round \mod \phaseLength \neq 0$}{\Return}
+        \Comment{Not the end of a phase}
+
+        \oneLineIf{$\exit = 1$}{$\exit \gets 0$ and \Return}
+        \Comment{End of ``extra mining phase''}
+
+        \State{$\vec{V} \gets \mathsf{ExtractPhaseVector}(\parallelChainsLocal, \round, \phase)$}
+        
+        \State{Let $m$ denote the most frequent element in $V$ and $c$ its frequency}
+
+        \If{$m = (decide, val)$} \Comment{Check decide for close termination}
+       
+        \oneLineIf{$c > m / 2$}{$\val \gets val, \decide \gets \true$}
+        \oneLineIf{$c > 3m / 4$}{$\val \gets val, \decide \gets \true, \exit = 1$}
+        
+        \EndIf
+        
+        \oneLineIf{$\decide = \true$}{\Return}
+        \Comment{Stop updating \val and \lock if party decides}
+        
+        \If{$\phase \mod 3 = 1$} \Comment{Step 1}
+        
+        \oneLineIf{$c > m / 2$}{$\val \gets val$}
+        \oneLineIf{$c > 3m / 4$}{$\decide \gets \true$}
+        
+        \ElsIf{$\phase \mod 3 = 2$} \Comment{Step 2}
+        
+        \oneLineIf{$c > m / 2$}{$\val \gets val$}
+        \oneLineIf{$c > 3m / 4$}{$\lock \gets \true$}
+        
+        \Else \Comment{Step 3}
+        
+        \oneLineIf{$\lock = \false$}{$\val \gets \vec{V}_1$} \Comment{Refer to the chain king (first chain)}
+        \oneLineIf{$\lock = \true$}{$\lock \gets \false$}
+        
+        \EndIf
+    \end{algorithmic}
+\end{cccAlgorithm}

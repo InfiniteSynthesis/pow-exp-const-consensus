@@ -1,0 +1,97 @@
+\begin{figure}[ht] \centering
+    \begin{tabularx}{\linewidth}{c c}
+        \begin{tikzpicture} \color{kanade}
+            \node[minimum height = 25pt, minimum width = 25pt] (party1) {$\party_1$};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (party1.east) (round11) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round11.east) (round12) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round12.east) (round1x) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round1x.east) (round13) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (round13.east) (round14) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round14.east) (round15) {};
+
+            \node[minimum height = 15pt, minimum width = 75pt, anchor = south east] at (round14.north east) (phase1) {\footnotesize Super-Phase $i$};
+
+            \begin{scope}
+                \node[fit = (round12) (phase1), draw = black, rectangle, inner sep = 0] (phase1box) {};
+            \end{scope}
+
+            \node[minimum height = 15pt, minimum width = 100pt, anchor = south east] at ([yshift = 15pt]round14.north east) (phase1output) {\footnotesize Super-Phase $i$ Output};
+
+            \begin{scope}
+                \node[fit = (round11) (phase1output), draw = kanade, rectangle, inner sep = 0] (phase1outputbox) {};
+            \end{scope}
+
+            \node[minimum height = 25pt, minimum width = 25pt, anchor = north] (party2) at (party1.south){$\party_2$};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (party2.east) (round21) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round21.east) (round22) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round22.east) (round2x) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round2x.east) (round23) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (round23.east) (round24) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round24.east) (round25) {};
+
+            \node[minimum height = 15pt, minimum width = 75pt, anchor = north east] at (round24.south east) (phase2) {\footnotesize Super-Phase $i$};
+
+            \begin{scope}
+                \node[fit = (round22) (phase2), draw = black, rectangle, inner sep = 0] (phase2box) {};
+            \end{scope}
+
+            \node[minimum height = 15pt, minimum width = 100pt, anchor = north east] at ([yshift = -15pt]round24.south east) (phase2output) {\footnotesize Super-Phase $i$ Output};
+
+            \begin{scope}
+                \node[fit = (round21) (phase2output), draw = kanade, rectangle, inner sep = 0] (phase2outputbox) {};
+            \end{scope}
+        \end{tikzpicture}
+         &
+        \begin{tikzpicture} \color{kanade}
+            \node[minimum height = 25pt, minimum width = 25pt] (party1) {$\party_1$};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (party1.east) (round11) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round11.east) (round12) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round12.east) (round1x) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round1x.east) (round13) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (round13.east) (round14) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round14.east) (round15) {};
+
+            \node[minimum height = 15pt, minimum width = 75pt, anchor = south east] at (round14.north east) (phase1) {\footnotesize Super-Phase $i$};
+
+            \begin{scope}
+                \node[fit = (round12) (phase1), draw = black, rectangle, inner sep = 0] (phase1box) {};
+            \end{scope}
+
+            \node[minimum height = 15pt, minimum width = 100pt, anchor = south east] at ([yshift = 15pt]round14.north east) (phase1output) {\footnotesize Super-Phase $i$ Output};
+
+            \begin{scope}
+                \node[fit = (round11) (phase1output), draw = kanade, rectangle, inner sep = 0] (phase1outputbox) {};
+            \end{scope}
+
+            \node[minimum height = 25pt, minimum width = 25pt, anchor = north] (party2) at (party1.south){$\party_2$};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (party2.east) (round21) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (round21.east) (round22) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round22.east) (round23) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round23.east) (round2x) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!80, anchor = west] at (round2x.east) (round24) {};
+            \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (round24.east) (round25) {};
+
+            \node[minimum height = 15pt, minimum width = 75pt, anchor = north east] at (round25.south east) (phase2) {\footnotesize Super-Phase $i$};
+
+
+            \begin{scope}
+                \node[fit = (round23) (phase2), draw = black, rectangle, inner sep = 0] (phase2box) {};
+            \end{scope}
+
+            \node[minimum height = 15pt, minimum width = 100pt, anchor = north east] at ([yshift = -15pt]round25.south east) (phase2output) {\footnotesize Super-Phase $i$ Output};
+
+            \begin{scope}
+                \node[fit = (round22) (phase2output), draw = kanade, rectangle, inner sep = 0] (phase2outputbox) {};
+            \end{scope}
+        \end{tikzpicture}
+        \\
+        (a) aligned super phases
+         &
+        (b) $1$-slack super phases
+        \\
+    \end{tabularx}
+    \addtocounter{table}{-1}
+    
+    \caption{Illustration of the super-phase expansion and how parties extract the super-phase output. \fcolorbox{kanade!80}{kanade!80}{\rule{0pt}{5pt}\rule{12pt}{0pt}} represents the phase where a party mines input messages with her output suggestion, and \fcolorbox{kanade!10}{kanade!10}{\rule{0pt}{5pt}\rule{12pt}{0pt}} is the dummy phase. The $i$-th super phase is represented by \fcolorbox{black}{white}{\rule{0pt}{5pt}\rule{12pt}{0pt}}; and the associated phases to extract output are depicted with \fcolorbox{kanade}{white}{\rule{0pt}{6pt}\rule{12pt}{0pt}}.}
+    \label{fig:super-phase-expansion}
+\end{figure}

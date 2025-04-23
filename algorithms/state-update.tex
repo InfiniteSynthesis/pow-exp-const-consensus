@@ -1,0 +1,39 @@
+\begin{cccAlgorithm}
+    {$\mathsf{StateUpdate}$}
+    {update-state}
+    {The state update algorithm.}
+
+    \begin{algorithmic}[1]
+        \LineComment{This algorithm is called once in each phase. It directly interacts with internal variables \val, \lock, \decide and \exit.}
+
+        \oneLineIf{$\round \mod \phaseLength \neq 0$}{\Return} \Comment{Not the end of a phase}
+
+        \If{$\exit = 1$}
+        \oneLineIf{$\phase \mod 3 = 0$}{$\exit \gets 0$} \Comment{End of ``extra mining iteration''}
+        \State{\Return}
+        \EndIf
+
+        \State{$\vec{V} \gets \mathsf{ExtractPhaseVector}(\parallelChainsLocal, \round, \phase)$}
+        
+        \State{Let $val$ denote the most frequent element in $V$ and $c$ its frequency}
+        
+        \If{$\phase \mod 3 = 1$} \Comment{Step 1}
+        
+        \oneLineIf{$c > m /2$}{$\val \gets val$}
+        \oneLineIf{$c > 3m / 4$}{$\decide \gets \true, \lock \gets \true$}
+        
+        \ElsIf{$\phase \mod 3 = 2$} \Comment{Step 2}
+        
+        \oneLineIf{$c > m /2$}{$\val \gets val$}
+        \oneLineIf{$c > 3m / 4$}{$\lock \gets \true$}
+        
+        \Else \Comment{Step 3}
+        
+        \oneLineIf{$\lock = \false$}{$\val \gets \vec{V}_1$} \Comment{Refer to the king chain}
+        \oneLineIf{$\decide = \true$}{$\exit \gets 1$}
+        \LineComment{Reset \lock for the next iteration}
+        \oneLineIf{$\decide = \false$ \textbf{and} $\lock = \true$}{$\lock \gets \false$}
+        
+        \EndIf
+    \end{algorithmic}
+\end{cccAlgorithm}

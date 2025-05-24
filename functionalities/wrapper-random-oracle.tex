@@ -5,29 +5,26 @@
 
     This functionality maintains state variables as follows.
 
-    \begin{minipage}{\linewidth}
-        \begin{tabularx}{.9\textwidth}{c  X}
-            \toprule[.3mm]
-            \textbf{State Variable}
-             & \textbf{Description}
-            \\ \midrule[.3mm]
-            $\partyset \gets \emptyset$
-             & The set of registered parties; the current set of corrupted parties is denoted by $\partyset'$.
-            \\ \midrule
-            $\tau \gets 0$
-             & The clock variable.
-            \\ \midrule
-            $h_\tau$
-             & An upper bound which restricts the \func-evaluations of all honest parties at time $\tau$.
-            \\ \midrule
-            $q_\honestPartySet, q_\adv \gets 0$
-             & The honest/adversary evaluation counter.
-            \\ \bottomrule[.3mm]
-        \end{tabularx}
-        \addtocounter{table}{-1}
-    \end{minipage}
+    \addtocounter{table}{-1}
+    \begin{tabularx}{.9\textwidth}{c  X}
+        \toprule[.3mm]
+        \textbf{State Variable}
+         & \textbf{Description}
+        \\ \midrule[.3mm]
+        $\partyset \gets \emptyset$
+         & The set of registered parties; the current set of corrupted parties is denoted by $\partyset'$.
+        \\ \midrule
+        $\tau \gets 0$
+         & The clock variable.
+        \\ \midrule
+        $h_\tau$
+         & An upper bound which restricts the \func-evaluations of all honest parties at time $\tau$.
+        \\ \midrule
+        $q_\honestPartySet, q_\adv \gets 0$
+         & The honest/adversary evaluation counter.
+        \\ \bottomrule[.3mm]
+    \end{tabularx}
 
-    \medskip
     \paragraph{Pre-mining attack handling (executed only if $\tau = 0$):}
     %
     \begin{cccItemize}[nosep]

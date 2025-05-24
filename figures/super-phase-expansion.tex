@@ -1,5 +1,6 @@
 \begin{figure}[ht] \centering
-    \begin{tabularx}{\linewidth}{c c}
+    \begin{minipage}{.5\linewidth}
+        \centering
         \begin{tikzpicture} \color{kanade}
             \node[minimum height = 25pt, minimum width = 25pt] (party1) {$\party_1$};
             \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (party1.east) (round11) {};
@@ -41,7 +42,10 @@
                 \node[fit = (round21) (phase2output), draw = kanade, rectangle, inner sep = 0] (phase2outputbox) {};
             \end{scope}
         \end{tikzpicture}
-         &
+    \end{minipage}
+    %
+    \begin{minipage}{.49\linewidth}
+        \centering
         \begin{tikzpicture} \color{kanade}
             \node[minimum height = 25pt, minimum width = 25pt] (party1) {$\party_1$};
             \node[minimum height = 15pt, minimum width = 25pt, fill=kanade!20, anchor = west] at (party1.east) (round11) {};
@@ -84,14 +88,20 @@
                 \node[fit = (round22) (phase2output), draw = kanade, rectangle, inner sep = 0] (phase2outputbox) {};
             \end{scope}
         \end{tikzpicture}
-        \\
-        (a) aligned super phases
-         &
+    \end{minipage}
+
+    \medskip
+
+    \begin{minipage}{.5\linewidth}
+        \centering
+        (a) Aligned super phases
+    \end{minipage}
+    %
+    \begin{minipage}{.49\linewidth}
+        \centering
         (b) $1$-slack super phases
-        \\
-    \end{tabularx}
-    \addtocounter{table}{-1}
-    
+    \end{minipage}
+
     \caption{Illustration of the super-phase expansion and how parties extract the super-phase output. \fcolorbox{kanade!80}{kanade!80}{\rule{0pt}{5pt}\rule{12pt}{0pt}} represents the phase where a party mines input messages with her output suggestion, and \fcolorbox{kanade!10}{kanade!10}{\rule{0pt}{5pt}\rule{12pt}{0pt}} is the dummy phase. The $i$-th super phase is represented by \fcolorbox{black}{white}{\rule{0pt}{5pt}\rule{12pt}{0pt}}; and the associated phases to extract output are depicted with \fcolorbox{kanade}{white}{\rule{0pt}{6pt}\rule{12pt}{0pt}}.}
     \label{fig:super-phase-expansion}
 \end{figure}
